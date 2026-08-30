@@ -65,6 +65,19 @@
     font-size: 13px;
     margin-top: 14px;
   }
+  #loading::before {
+    content: '';
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: #5b8cff;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 1s infinite ease-in-out;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
 
   .card {
     background: #1f2126;
@@ -102,7 +115,7 @@
   <textarea id="problemInput" placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"></textarea>
   <br>
   <button id="runBtn" onclick="runWarRoom()">Run War Room</button>
-  <div id="loading">Running agents... this may take 30-60 seconds ⏳</div>
+  <div id="loading">Running agents...</div>
 
   <div id="results"></div>
 
@@ -123,6 +136,23 @@ async function runWarRoom() {
   btn.disabled = true;
   loading.style.display = 'block';
   results.innerHTML = '';
+
+  const steps = [
+    'Analyzing the problem...',
+    'Generating Solution A...',
+    'Generating Solution B...',
+    'Refining Solution A...',
+    'Running cost critique...',
+    'Running feasibility critique...',
+    'Red Team attacking Solution B...',
+    'Judge weighing both solutions...'
+  ];
+  let stepIndex = 0;
+  loading.textContent = steps[0];
+  const stepTimer = setInterval(() => {
+    stepIndex = (stepIndex + 1) % steps.length;
+    loading.textContent = steps[stepIndex];
+  }, 6000);
 
   try {
     const response = await fetch('/api/run', {
@@ -152,6 +182,7 @@ async function runWarRoom() {
     results.innerHTML = `<div class="card">${err.message || 'Something went wrong. Please try again.'}</div>`;
     console.error(err);
   } finally {
+    clearInterval(stepTimer);
     btn.disabled = false;
     loading.style.display = 'none';
   }
