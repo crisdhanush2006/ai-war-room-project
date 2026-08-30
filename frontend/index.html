@@ -2,70 +2,111 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI War Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+  * { box-sizing: border-box; }
+
   body {
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: #eee;
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 0 20px;
+    margin: 0;
+    background: #16181d;
+    color: #e6e6e6;
+    font-family: 'Inter', sans-serif;
+    padding: 40px 20px 80px;
   }
+
+  .wrap { max-width: 700px; margin: 0 auto; }
+
   h1 {
-    color: #4fc3f7;
+    font-size: 32px;
+    margin: 0 0 8px;
   }
+
+  header p {
+    color: #9a9a9a;
+    font-size: 14px;
+    margin: 0 0 30px;
+  }
+
   textarea {
     width: 100%;
-    height: 80px;
-    padding: 10px;
-    font-size: 16px;
+    min-height: 70px;
+    background: #1f2126;
+    border: 1px solid #33363c;
+    color: #e6e6e6;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 12px;
     border-radius: 6px;
-    border: none;
-    margin-bottom: 10px;
+    resize: vertical;
   }
+  textarea:focus { outline: none; border-color: #5b8cff; }
+  textarea::placeholder { color: #666; }
+
   button {
-    background: #4fc3f7;
-    color: #111;
+    background: #5b8cff;
+    color: #fff;
     border: none;
-    padding: 12px 20px;
-    font-size: 16px;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px 22px;
     border-radius: 6px;
     cursor: pointer;
+    margin-top: 12px;
   }
-  button:disabled {
-    background: #555;
-    cursor: not-allowed;
-  }
-  .card {
-    background: #1e1e1e;
-    border-radius: 8px;
-    padding: 15px;
-    margin-top: 15px;
-    white-space: pre-wrap;
-    line-height: 1.5;
-  }
-  .card h3 {
-    margin-top: 0;
-    color: #4fc3f7;
-  }
+  button:hover:not(:disabled) { background: #4a76e0; }
+  button:disabled { background: #444; cursor: not-allowed; }
+
   #loading {
-    margin-top: 15px;
-    color: #aaa;
+    display: none;
+    color: #9a9a9a;
+    font-size: 13px;
+    margin-top: 14px;
+  }
+
+  .card {
+    background: #1f2126;
+    border: 1px solid #33363c;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-top: 14px;
+  }
+
+  .card h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    color: #5b8cff;
+  }
+
+  .card.verdict h3 { color: #4caf7d; }
+
+  .card-body {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #cfcfcf;
+    white-space: pre-wrap;
   }
 </style>
 </head>
 <body>
 
-<h1>🏛️ AI War Room</h1>
-<p>Type a problem below. Multiple AI agents will analyze, propose, critique, and judge solutions.</p>
+<div class="wrap">
 
-<textarea id="problemInput" placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"></textarea>
-<br>
-<button id="runBtn" onclick="runWarRoom()">Run War Room</button>
+  <header>
+    <h1>🏛️ AI War Room</h1>
+    <p>Type a problem below. Multiple AI agents will analyze, propose, critique, and judge solutions.</p>
+  </header>
 
-<div id="loading" style="display:none;">Running agents... this may take 30-60 seconds ⏳</div>
-<div id="results"></div>
+  <textarea id="problemInput" placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"></textarea>
+  <br>
+  <button id="runBtn" onclick="runWarRoom()">Run War Room</button>
+  <div id="loading">Running agents... this may take 30-60 seconds ⏳</div>
+
+  <div id="results"></div>
+
+</div>
 
 <script>
 async function runWarRoom() {
@@ -93,14 +134,14 @@ async function runWarRoom() {
     const data = await response.json();
 
     results.innerHTML = `
-      <div class="card"><h3>🧩 Problem Analysis</h3>${data.analysis.analysis}</div>
-      <div class="card"><h3>💡 Solution A</h3>${data.solutionA.analysis}</div>
-      <div class="card"><h3>💡 Solution B</h3>${data.solutionB.analysis}</div>
-      <div class="card"><h3>✨ Refined Solution A</h3>${data.refinedA.analysis}</div>
-      <div class="card"><h3>💰 Cost Critique (on B)</h3>${data.costReview.analysis}</div>
-      <div class="card"><h3>🔧 Feasibility Critique (on B)</h3>${data.feasibilityReview.analysis}</div>
-      <div class="card"><h3>⚔️ Red Team (on B)</h3>${data.redTeamReview.analysis}</div>
-      <div class="card"><h3>⚖️ Final Verdict</h3>${data.verdict.analysis}</div>
+      <div class="card"><h3>🧩 Problem Analysis</h3><div class="card-body">${data.analysis.analysis}</div></div>
+      <div class="card"><h3>💡 Solution A</h3><div class="card-body">${data.solutionA.analysis}</div></div>
+      <div class="card"><h3>💡 Solution B</h3><div class="card-body">${data.solutionB.analysis}</div></div>
+      <div class="card"><h3>✨ Refined Solution A</h3><div class="card-body">${data.refinedA.analysis}</div></div>
+      <div class="card"><h3>💰 Cost Critique (on B)</h3><div class="card-body">${data.costReview.analysis}</div></div>
+      <div class="card"><h3>🔧 Feasibility Critique (on B)</h3><div class="card-body">${data.feasibilityReview.analysis}</div></div>
+      <div class="card"><h3>⚔️ Red Team (on B)</h3><div class="card-body">${data.redTeamReview.analysis}</div></div>
+      <div class="card verdict"><h3>⚖️ Final Verdict</h3><div class="card-body">${data.verdict.analysis}</div></div>
     `;
   } catch (err) {
     results.innerHTML = '<div class="card">Something went wrong. Check the server terminal for errors.</div>';
