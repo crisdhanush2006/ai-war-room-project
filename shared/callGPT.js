@@ -6,7 +6,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function callGPT(prompt, systemMessage = 'You are a helpful assistant.') {
-  const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash-lite' });
   const fullPrompt = `${systemMessage}\n\n${prompt}`;
 
   const result = await model.generateContent(fullPrompt);
