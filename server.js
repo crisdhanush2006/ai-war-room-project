@@ -3,7 +3,7 @@ const path = require('path');
 const { runWarRoom } = require('./orchestration/warRoom');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'frontend')));
@@ -15,7 +15,12 @@ app.post('/api/run', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Something went wrong' });
+
+    if (error.status === 429) {
+      res.status(429).json({ error: 'Too many people are using the AI right now. Please wait a minute and try again.' });
+    } else {
+      res.status(500).json({ error: 'Something went wrong on our end. Please try again shortly.' });
+    }
   }
 });
 

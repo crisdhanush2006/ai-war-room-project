@@ -131,6 +131,11 @@ async function runWarRoom() {
       body: JSON.stringify({ problem })
     });
 
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error || 'Something went wrong.');
+    }
+
     const data = await response.json();
 
     results.innerHTML = `
@@ -144,7 +149,7 @@ async function runWarRoom() {
       <div class="card verdict"><h3>⚖️ Final Verdict</h3><div class="card-body">${data.verdict.analysis}</div></div>
     `;
   } catch (err) {
-    results.innerHTML = '<div class="card">Something went wrong. Check the server terminal for errors.</div>';
+    results.innerHTML = `<div class="card">${err.message || 'Something went wrong. Please try again.'}</div>`;
     console.error(err);
   } finally {
     btn.disabled = false;
