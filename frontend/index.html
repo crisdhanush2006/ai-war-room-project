@@ -466,7 +466,7 @@ function renderResults(data) {
   let html = `
     <div class="card"><h3>🧩 Problem Analysis</h3><div class="card-body">${data.analysis.analysis}</div></div>
     <div class="card"><h3>💡 Solution A</h3><div class="card-body">${data.solutionA.analysis}</div></div>
-    <div class="card"><h3>✨ Refined Solution A</h3><div class="card-body">${data.refinedA.analysis}</div></div>
+    <div class="card"><h3>✨ Refined Solution A</h3><div class="card-body">${data.refined.analysis}</div></div>
   `;
 
   if (data.mode === 'full') {
@@ -583,7 +583,7 @@ async function askFollowUp() {
   const context = {
     problem: lastProblem,
     analysis: lastResult.analysis.analysis,
-    solutionA: lastResult.refinedA.analysis,
+    solutionA: lastResult.refined.analysis,
     solutionB: lastResult.mode === 'full' ? lastResult.solutionB.analysis : null,
     verdict: lastResult.mode === 'full' ? lastResult.verdict.analysis : null
   };
@@ -649,7 +649,7 @@ function downloadPDF() {
 
   addSection('Problem Analysis', lastResult.analysis.analysis);
   addSection('Solution A', lastResult.solutionA.analysis);
-  addSection('Refined Solution A', lastResult.refinedA.analysis);
+  addSection('Refined Solution A', lastResult.refined.analysis);
 
   if (lastResult.mode === 'full') {
     addSection('Solution B', lastResult.solutionB.analysis);
