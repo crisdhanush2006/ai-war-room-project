@@ -10,8 +10,8 @@ app.use(express.static(path.join(__dirname, 'frontend')));
 
 app.post('/api/run', async (req, res) => {
   try {
-    const { problem } = req.body;
-    const result = await runWarRoom(problem);
+    const { problem, mode } = req.body;
+    const result = await runWarRoom(problem, mode || 'full');
     res.json(result);
   } catch (error) {
     console.error(error);

@@ -46,7 +46,38 @@
   textarea:focus { outline: none; border-color: #5b8cff; }
   textarea::placeholder { color: #666; }
 
-  button {
+  .mode-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .mode-btn {
+    flex: 1;
+    background: #1f2126;
+    border: 1px solid #33363c;
+    color: #9a9a9a;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+  }
+  .mode-btn small {
+    display: block;
+    font-weight: 400;
+    color: #6b7076;
+    margin-top: 2px;
+  }
+  .mode-btn.active {
+    border-color: #5b8cff;
+    background: #1e2a4a;
+    color: #e6e6e6;
+  }
+  .mode-btn.active small { color: #9db3ff; }
+
+  button.run {
     background: #5b8cff;
     color: #fff;
     border: none;
@@ -55,15 +86,23 @@
     padding: 12px 22px;
     border-radius: 6px;
     cursor: pointer;
-    margin-top: 12px;
+    margin-top: 14px;
   }
-  button:hover:not(:disabled) { background: #4a76e0; }
-  button:disabled { background: #444; cursor: not-allowed; }
+  button.run:hover:not(:disabled) { background: #4a76e0; }
+  button.run:disabled { background: #444; cursor: not-allowed; }
 
   #downloadBtn {
     display: none;
     background: #2d3138;
-    margin-top: 20px;
+    color: #e6e6e6;
+    border: none;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px 22px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 14px;
+    margin-left: 8px;
   }
   #downloadBtn:hover { background: #383d45; }
 
@@ -121,8 +160,20 @@
   </header>
 
   <textarea id="problemInput" placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"></textarea>
+
+  <div class="mode-row">
+    <button class="mode-btn" id="quickBtn" onclick="setMode('quick')">
+      Quick
+      <small>4 agents · faster</small>
+    </button>
+    <button class="mode-btn active" id="fullBtn" onclick="setMode('full')">
+      Full
+      <small>8 agents · thorough</small>
+    </button>
+  </div>
+
   <br>
-  <button id="runBtn" onclick="runWarRoom()">Run War Room</button>
+  <button class="run" id="runBtn" onclick="runWarRoom()">Run War Room</button>
   <button id="downloadBtn" onclick="downloadPDF()">⬇ Download as PDF</button>
   <div id="loading">Running agents...</div>
 
@@ -131,8 +182,15 @@
 </div>
 
 <script>
+let currentMode = 'full';
 let lastResult = null;
 let lastProblem = '';
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('quickBtn').classList.toggle('active', mode === 'quick');
+  document.getElementById('fullBtn').classList.toggle('active', mode === 'full');
+}
 
 async function runWarRoom() {
   const problem = document.getElementById('problemInput').value;
@@ -151,16 +209,23 @@ async function runWarRoom() {
   loading.style.display = 'block';
   results.innerHTML = '';
 
-  const steps = [
+  const fullSteps = [
     'Analyzing the problem...',
     'Generating Solution A...',
-    'Generating Solution B...',
     'Refining Solution A...',
+    'Generating Solution B...',
     'Running cost critique...',
     'Running feasibility critique...',
     'Red Team attacking Solution B...',
     'Judge weighing both solutions...'
   ];
+  const quickSteps = [
+    'Analyzing the problem...',
+    'Generating Solution A...',
+    'Refining Solution A...'
+  ];
+  const steps = currentMode === 'quick' ? quickSteps : fullSteps;
+
   let stepIndex = 0;
   loading.textContent = steps[0];
   const stepTimer = setInterval(() => {
@@ -172,7 +237,7 @@ async function runWarRoom() {
     const response = await fetch('/api/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ problem })
+      body: JSON.stringify({ problem, mode: currentMode })
     });
 
     if (!response.ok) {
@@ -184,17 +249,23 @@ async function runWarRoom() {
     lastResult = data;
     lastProblem = problem;
 
-    results.innerHTML = `
+    let html = `
       <div class="card"><h3>🧩 Problem Analysis</h3><div class="card-body">${data.analysis.analysis}</div></div>
       <div class="card"><h3>💡 Solution A</h3><div class="card-body">${data.solutionA.analysis}</div></div>
-      <div class="card"><h3>💡 Solution B</h3><div class="card-body">${data.solutionB.analysis}</div></div>
       <div class="card"><h3>✨ Refined Solution A</h3><div class="card-body">${data.refinedA.analysis}</div></div>
-      <div class="card"><h3>💰 Cost Critique (on B)</h3><div class="card-body">${data.costReview.analysis}</div></div>
-      <div class="card"><h3>🔧 Feasibility Critique (on B)</h3><div class="card-body">${data.feasibilityReview.analysis}</div></div>
-      <div class="card"><h3>⚔️ Red Team (on B)</h3><div class="card-body">${data.redTeamReview.analysis}</div></div>
-      <div class="card verdict"><h3>⚖️ Final Verdict</h3><div class="card-body">${data.verdict.analysis}</div></div>
     `;
 
+    if (data.mode === 'full') {
+      html += `
+        <div class="card"><h3>💡 Solution B</h3><div class="card-body">${data.solutionB.analysis}</div></div>
+        <div class="card"><h3>💰 Cost Critique (on B)</h3><div class="card-body">${data.costReview.analysis}</div></div>
+        <div class="card"><h3>🔧 Feasibility Critique (on B)</h3><div class="card-body">${data.feasibilityReview.analysis}</div></div>
+        <div class="card"><h3>⚔️ Red Team (on B)</h3><div class="card-body">${data.redTeamReview.analysis}</div></div>
+        <div class="card verdict"><h3>⚖️ Final Verdict</h3><div class="card-body">${data.verdict.analysis}</div></div>
+      `;
+    }
+
+    results.innerHTML = html;
     downloadBtn.style.display = 'inline-block';
   } catch (err) {
     results.innerHTML = `<div class="card">${err.message || 'Something went wrong. Please try again.'}</div>`;
@@ -245,12 +316,15 @@ function downloadPDF() {
 
   addSection('Problem Analysis', lastResult.analysis.analysis);
   addSection('Solution A', lastResult.solutionA.analysis);
-  addSection('Solution B', lastResult.solutionB.analysis);
   addSection('Refined Solution A', lastResult.refinedA.analysis);
-  addSection('Cost Critique (on B)', lastResult.costReview.analysis);
-  addSection('Feasibility Critique (on B)', lastResult.feasibilityReview.analysis);
-  addSection('Red Team (on B)', lastResult.redTeamReview.analysis);
-  addSection('Final Verdict', lastResult.verdict.analysis);
+
+  if (lastResult.mode === 'full') {
+    addSection('Solution B', lastResult.solutionB.analysis);
+    addSection('Cost Critique (on B)', lastResult.costReview.analysis);
+    addSection('Feasibility Critique (on B)', lastResult.feasibilityReview.analysis);
+    addSection('Red Team (on B)', lastResult.redTeamReview.analysis);
+    addSection('Final Verdict', lastResult.verdict.analysis);
+  }
 
   doc.save('ai-war-room-report.pdf');
 }
