@@ -7,21 +7,30 @@ async function judgeSolutions(solutionA, solutionB) {
   const prompt = `
 Compare these two solutions. Decide which is stronger and why.
 Give each a score out of 100.
-State your final verdict clearly at the end.
 
 SOLUTION A:
 ${solutionA}
 
 SOLUTION B:
 ${solutionB}
+
+At the very end, on its own line, write exactly one of these:
+WINNER: A
+WINNER: B
 `;
 
   const result = await callGPT(prompt, systemMessage);
 
+  let winner = 'A';
+  if (result.includes('WINNER: B')) {
+    winner = 'B';
+  }
+
   return makeAgentResponse({
     agent: 'judge',
     analysis: result,
-    score: null // Judge writes scores inside the text for now — we can extract numbers later
+    score: null,
+    winner
   });
 }
 

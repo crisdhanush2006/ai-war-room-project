@@ -7,13 +7,12 @@ const { critiqueFeasibility } = require('../agents/feasibilityCritic');
 const { redTeamSolution } = require('../agents/redTeam');
 const { judgeSolutions } = require('../agents/judge');
 
-// mode: 'quick' (4 agents) or 'full' (all 8 agents)
 async function runWarRoom(problem, mode = 'full') {
   const analysis = await analyzeProblem(problem);
   const solutionA = await generateSolutionA(analysis.analysis);
-  const refinedA = await refineSolution(solutionA.analysis);
 
   if (mode === 'quick') {
+    const refinedA = await refineSolution(solutionA.analysis);
     return {
       mode,
       problem,
@@ -26,8 +25,12 @@ async function runWarRoom(problem, mode = 'full') {
   const solutionB = await generateSolutionB(analysis.analysis);
   const costReview = await critiqueCost(solutionB.analysis);
   const feasibilityReview = await critiqueFeasibility(solutionB.analysis);
-  const redTeamReview = await redTeamSolution(solutionB.analysis);
-  const verdict = await judgeSolutions(refinedA.analysis, solutionB.analysis);
+
+  const verdict = await judgeSolutions(solutionA.analysis, solutionB.analysis);
+  const winningSolution = verdict.winner === 'A' ? solutionA.analysis : solutionB.analysis;
+
+  const refined = await refineSolution(winningSolution);
+  const redTeamReview = await redTeamSolution(refined.analysis);
 
   return {
     mode,
@@ -35,11 +38,11 @@ async function runWarRoom(problem, mode = 'full') {
     analysis,
     solutionA,
     solutionB,
-    refinedA,
     costReview,
     feasibilityReview,
-    redTeamReview,
-    verdict
+    verdict,
+    refined,
+    redTeamReview
   };
 }
 
