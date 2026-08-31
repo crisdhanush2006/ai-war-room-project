@@ -20,16 +20,8 @@
 
   .wrap { max-width: 700px; margin: 0 auto; }
 
-  h1 {
-    font-size: 32px;
-    margin: 0 0 8px;
-  }
-
-  header p {
-    color: #9a9a9a;
-    font-size: 14px;
-    margin: 0 0 30px;
-  }
+  h1 { font-size: 32px; margin: 0 0 8px; }
+  header p { color: #9a9a9a; font-size: 14px; margin: 0 0 30px; }
 
   textarea {
     width: 100%;
@@ -46,11 +38,7 @@
   textarea:focus { outline: none; border-color: #5b8cff; }
   textarea::placeholder { color: #666; }
 
-  .mode-row {
-    display: flex;
-    gap: 10px;
-    margin-top: 12px;
-  }
+  .mode-row { display: flex; gap: 10px; margin-top: 12px; }
 
   .mode-btn {
     flex: 1;
@@ -64,17 +52,8 @@
     cursor: pointer;
     text-align: left;
   }
-  .mode-btn small {
-    display: block;
-    font-weight: 400;
-    color: #6b7076;
-    margin-top: 2px;
-  }
-  .mode-btn.active {
-    border-color: #5b8cff;
-    background: #1e2a4a;
-    color: #e6e6e6;
-  }
+  .mode-btn small { display: block; font-weight: 400; color: #6b7076; margin-top: 2px; }
+  .mode-btn.active { border-color: #5b8cff; background: #1e2a4a; color: #e6e6e6; }
   .mode-btn.active small { color: #9db3ff; }
 
   button.run {
@@ -106,12 +85,7 @@
   }
   #downloadBtn:hover { background: #383d45; }
 
-  #loading {
-    display: none;
-    color: #9a9a9a;
-    font-size: 13px;
-    margin-top: 14px;
-  }
+  #loading { display: none; color: #9a9a9a; font-size: 13px; margin-top: 14px; }
   #loading::before {
     content: '';
     display: inline-block;
@@ -121,10 +95,7 @@
     margin-right: 8px;
     animation: pulse 1s infinite ease-in-out;
   }
-  @keyframes pulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
-  }
+  @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
   .card {
     background: #1f2126;
@@ -133,21 +104,68 @@
     padding: 18px 20px;
     margin-top: 14px;
   }
-
-  .card h3 {
-    margin: 0 0 10px;
-    font-size: 15px;
-    color: #5b8cff;
-  }
-
+  .card h3 { margin: 0 0 10px; font-size: 15px; color: #5b8cff; }
   .card.verdict h3 { color: #4caf7d; }
+  .card-body { font-size: 13px; line-height: 1.7; color: #cfcfcf; white-space: pre-wrap; }
 
-  .card-body {
+  #followupSection {
+    display: none;
+    margin-top: 24px;
+    border-top: 1px solid #33363c;
+    padding-top: 20px;
+  }
+  #followupSection h4 { font-size: 14px; color: #9db3ff; margin: 0 0 10px; }
+
+  #chatLog { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+
+  .chat-q {
+    background: #1e2a4a;
+    border-radius: 8px;
+    padding: 10px 14px;
     font-size: 13px;
-    line-height: 1.7;
+    color: #cfd8ff;
+    align-self: flex-end;
+    max-width: 85%;
+  }
+  .chat-a {
+    background: #1f2126;
+    border: 1px solid #33363c;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.6;
     color: #cfcfcf;
     white-space: pre-wrap;
+    align-self: flex-start;
+    max-width: 90%;
   }
+
+  .followup-row { display: flex; gap: 8px; }
+
+  #followupInput {
+    flex: 1;
+    background: #1f2126;
+    border: 1px solid #33363c;
+    color: #e6e6e6;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 6px;
+  }
+  #followupInput:focus { outline: none; border-color: #5b8cff; }
+
+  #askBtn {
+    background: #5b8cff;
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #askBtn:hover:not(:disabled) { background: #4a76e0; }
+  #askBtn:disabled { background: #444; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -179,6 +197,15 @@
 
   <div id="results"></div>
 
+  <div id="followupSection">
+    <h4>💬 Ask a follow-up</h4>
+    <div id="chatLog"></div>
+    <div class="followup-row">
+      <input id="followupInput" type="text" placeholder="e.g. Why did Solution B lose?" />
+      <button id="askBtn" onclick="askFollowUp()">Ask</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -203,9 +230,13 @@ async function runWarRoom() {
   const downloadBtn = document.getElementById('downloadBtn');
   const loading = document.getElementById('loading');
   const results = document.getElementById('results');
+  const followupSection = document.getElementById('followupSection');
+  const chatLog = document.getElementById('chatLog');
 
   btn.disabled = true;
   downloadBtn.style.display = 'none';
+  followupSection.style.display = 'none';
+  chatLog.innerHTML = '';
   loading.style.display = 'block';
   results.innerHTML = '';
 
@@ -267,6 +298,7 @@ async function runWarRoom() {
 
     results.innerHTML = html;
     downloadBtn.style.display = 'inline-block';
+    followupSection.style.display = 'block';
   } catch (err) {
     results.innerHTML = `<div class="card">${err.message || 'Something went wrong. Please try again.'}</div>`;
     console.error(err);
@@ -274,6 +306,56 @@ async function runWarRoom() {
     clearInterval(stepTimer);
     btn.disabled = false;
     loading.style.display = 'none';
+  }
+}
+
+async function askFollowUp() {
+  const input = document.getElementById('followupInput');
+  const question = input.value.trim();
+  if (!question || !lastResult) return;
+
+  const askBtn = document.getElementById('askBtn');
+  const chatLog = document.getElementById('chatLog');
+
+  const qDiv = document.createElement('div');
+  qDiv.className = 'chat-q';
+  qDiv.textContent = question;
+  chatLog.appendChild(qDiv);
+
+  const aDiv = document.createElement('div');
+  aDiv.className = 'chat-a';
+  aDiv.textContent = 'Thinking...';
+  chatLog.appendChild(aDiv);
+
+  input.value = '';
+  askBtn.disabled = true;
+
+  const context = {
+    problem: lastProblem,
+    analysis: lastResult.analysis.analysis,
+    solutionA: lastResult.refinedA.analysis,
+    solutionB: lastResult.mode === 'full' ? lastResult.solutionB.analysis : null,
+    verdict: lastResult.mode === 'full' ? lastResult.verdict.analysis : null
+  };
+
+  try {
+    const response = await fetch('/api/followup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ context, question })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error || 'Something went wrong.');
+    }
+
+    const data = await response.json();
+    aDiv.textContent = data.answer;
+  } catch (err) {
+    aDiv.textContent = err.message || 'Something went wrong. Please try again.';
+  } finally {
+    askBtn.disabled = false;
   }
 }
 

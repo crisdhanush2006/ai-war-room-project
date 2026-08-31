@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { runWarRoom } = require('./orchestration/warRoom');
+const { askFollowUp } = require('./agents/followUp');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,22 @@ app.post('/api/run', async (req, res) => {
       res.status(429).json({ error: 'Too many people are using the AI right now. Please wait a minute and try again.' });
     } else {
       res.status(500).json({ error: 'Something went wrong on our end. Please try again shortly.' });
+    }
+  }
+});
+
+app.post('/api/followup', async (req, res) => {
+  try {
+    const { context, question } = req.body;
+    const answer = await askFollowUp(context, question);
+    res.json({ answer });
+  } catch (error) {
+    console.error(error);
+
+    if (error.status === 429) {
+      res.status(429).json({ error: 'Too many people are using the AI right now. Please wait a minute and try again.' });
+    } else {
+      res.status(500).json({ error: 'Something went wrong. Please try again.' });
     }
   }
 });
