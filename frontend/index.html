@@ -474,7 +474,7 @@ function renderResults(data) {
       <div class="card"><h3>💡 Solution B</h3><div class="card-body">${data.solutionB.analysis}</div></div>
       <div class="card"><h3>💰 Cost Critique (on B)</h3><div class="card-body">${data.costReview.analysis}</div></div>
       <div class="card"><h3>🔧 Feasibility Critique (on B)</h3><div class="card-body">${data.feasibilityReview.analysis}</div></div>
-      <div class="card"><h3>⚔️ Red Team (on B)</h3><div class="card-body">${data.redTeamReview...
+      <div class="card"><h3>⚔️ Red Team (on Winner)</h3><div class="card-body">${data.redTeamReview...
       <div class="card verdict"><h3>⚖️ Final Verdict</h3><div class="card-body">${data.verdict.analysis}</div></div>
     `;
   }
@@ -655,7 +655,7 @@ function downloadPDF() {
     addSection('Solution B', lastResult.solutionB.analysis);
     addSection('Cost Critique (on B)', lastResult.costReview.analysis);
     addSection('Feasibility Critique (on B)', lastResult.feasibilityReview.analysis);
-    addSection('Red Team (on B)', lastResult.redTeamReview.analysis);
+    addSection('Red Team (on Winner)', lastResult.redTeamReview.analysis);
     addSection('Final Verdict', lastResult.verdict.analysis);
   }
 
