@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'frontend')));
 
+// OLD endpoint - kept exactly as before, still works if anything still calls it
 app.post('/api/run', async (req, res) => {
   try {
     const { problem, mode } = req.body;
@@ -22,6 +23,37 @@ app.post('/api/run', async (req, res) => {
     } else {
       res.status(500).json({ error: 'Something went wrong on our end. Please try again shortly.' });
     }
+  }
+});
+
+// NEW endpoint - streams each agent result live using Server-Sent Events
+app.post('/api/run-stream', async (req, res) => {
+  const { problem, mode } = req.body;
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  function sendEvent(name, data) {
+    res.write(`event: ${name}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  }
+
+  try {
+    await runWarRoom(problem, mode || 'full', (name, data) => {
+      sendEvent(name, data);
+    });
+  } catch (error) {
+    console.error(error);
+
+    const message = error.status === 429
+      ? 'Too many people are using the AI right now. Please wait a minute and try again.'
+      : 'Something went wrong on our end. Please try again shortly.';
+
+    sendEvent('error', { error: message });
+  } finally {
+    res.end();
   }
 });
 
