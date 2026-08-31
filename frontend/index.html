@@ -3,666 +3,1980 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>AI War Room</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
-  * { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #16181d;
+  color: #e6e6e6;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 40px 20px 80px;
+}
+
+.wrap {
+  max-width: 760px;
+  margin: auto;
+}
+
+/* ================= HEADER ================= */
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+header h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+}
+
+header p {
+  margin: 0 0 20px;
+  color: #9a9a9a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ================= BUTTONS ================= */
+
+button {
+  font-family: inherit;
+}
+
+#historyToggleBtn {
+  background: #1f2126;
+  border: 1px solid #33363c;
+  color: #9db3ff;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#historyToggleBtn:hover {
+  background: #262930;
+}
+
+button.run {
+  background: #5b8cff;
+  color: white;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 14px;
+}
+
+button.run:hover:not(:disabled) {
+  background: #4a76e0;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* ================= HISTORY ================= */
+
+#historyPanel {
+  display: none;
+  background: #1f2126;
+  border: 1px solid #33363c;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+#historyPanel h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #9db3ff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#clearHistoryBtn {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.history-item {
+  background: #16181d;
+  border: 1px solid #2a2d33;
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-item:hover {
+  border-color: #5b8cff;
+}
+
+.history-item-text {
+  flex: 1;
+  font-size: 13px;
+  color: #cfcfcf;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item-meta {
+  font-size: 11px;
+  color: #6b7076;
+  white-space: nowrap;
+}
+
+.history-item-delete {
+  background: none;
+  border: none;
+  color: #6b7076;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.history-item-delete:hover {
+  color: #ff6b6b;
+}
+
+.history-empty {
+  color: #6b7076;
+  font-size: 13px;
+}
+
+/* ================= INPUT ================= */
+
+textarea {
+  width: 100%;
+  min-height: 90px;
+  background: #1f2126;
+  border: 1px solid #33363c;
+  color: #e6e6e6;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 12px;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #5b8cff;
+}
+
+textarea::placeholder {
+  color: #666;
+}
+
+/* ================= MODE ================= */
+
+.mode-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.mode-btn {
+  flex: 1;
+  background: #1f2126;
+  border: 1px solid #33363c;
+  color: #9a9a9a;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mode-btn small {
+  display: block;
+  font-weight: normal;
+  color: #6b7076;
+  margin-top: 3px;
+}
+
+.mode-btn.active {
+  border-color: #5b8cff;
+  background: #1e2a4a;
+  color: white;
+}
+
+.mode-btn.active small {
+  color: #9db3ff;
+}
+
+/* ================= DOWNLOAD ================= */
+
+#downloadBtn {
+  display: none;
+  background: #2d3138;
+  color: #e6e6e6;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px 22px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 14px;
+  margin-left: 8px;
+}
+
+#downloadBtn:hover {
+  background: #383d45;
+}
+
+/* ================= LOADING ================= */
+
+#loading {
+  display: none;
+  color: #9a9a9a;
+  font-size: 13px;
+  margin-top: 14px;
+}
+
+#loading::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #5b8cff;
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: pulse 1s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%,100% {
+    opacity: .3;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ================= RESULT CARDS ================= */
+
+.card {
+  background: #1f2126;
+  border: 1px solid #33363c;
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin-top: 14px;
+  animation: cardIn .35s ease both;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.result-header h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #5b8cff;
+}
+
+.result-icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.card-body {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #cfcfcf;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Individual SVG colors */
+
+.analysis-card .result-icon {
+  color: #5b8cff;
+}
+
+.solution-card .result-icon {
+  color: #8b9eff;
+}
+
+.refined-card .result-icon {
+  color: #c084fc;
+}
+
+.cost-card .result-icon {
+  color: #f0b429;
+}
+
+.feasibility-card .result-icon {
+  color: #4caf7d;
+}
+
+.redteam-card .result-icon {
+  color: #ff6b6b;
+}
+
+/* Verdict */
+
+.card.verdict {
+  border-color: #4caf7d;
+}
+
+.card.verdict .result-header h3,
+.card.verdict .result-icon {
+  color: #4caf7d;
+}
+
+/* ================= FOLLOW UP ================= */
+
+#followupSection {
+  display: none;
+  margin-top: 24px;
+  border-top: 1px solid #33363c;
+  padding-top: 20px;
+}
+
+#followupSection h4 {
+  font-size: 14px;
+  color: #9db3ff;
+  margin: 0 0 10px;
+}
+
+#chatLog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.chat-q {
+  background: #1e2a4a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #cfd8ff;
+  align-self: flex-end;
+  max-width: 85%;
+}
+
+.chat-a {
+  background: #1f2126;
+  border: 1px solid #33363c;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #cfcfcf;
+  white-space: pre-wrap;
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+.followup-row {
+  display: flex;
+  gap: 8px;
+}
+
+#followupInput {
+  flex: 1;
+  background: #1f2126;
+  border: 1px solid #33363c;
+  color: white;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 6px;
+}
+
+#followupInput:focus {
+  outline: none;
+  border-color: #5b8cff;
+}
+
+#askBtn {
+  background: #5b8cff;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#askBtn:hover:not(:disabled) {
+  background: #4a76e0;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 600px) {
 
   body {
-    margin: 0;
-    background: #16181d;
-    color: #e6e6e6;
-    font-family: 'Inter', sans-serif;
-    padding: 40px 20px 80px;
+    padding: 25px 12px 60px;
   }
 
-  .wrap { max-width: 700px; margin: 0 auto; }
-
-  h1 { font-size: 32px; margin: 0 0 8px; }
-  header p { color: #9a9a9a; font-size: 14px; margin: 0 0 20px; }
-
-  .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .header-row {
+    flex-direction: column;
+  }
 
   #historyToggleBtn {
-    background: #1f2126;
-    border: 1px solid #33363c;
-    color: #9db3ff;
-    font-weight: 600;
-    font-size: 13px;
-    padding: 10px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    white-space: nowrap;
-    margin-top: 4px;
-  }
-  #historyToggleBtn:hover { background: #262930; }
-
-  #historyPanel {
-    display: none;
-    background: #1f2126;
-    border: 1px solid #33363c;
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin-bottom: 20px;
-  }
-  #historyPanel h4 {
-    margin: 0 0 10px;
-    font-size: 14px;
-    color: #9db3ff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  #clearHistoryBtn {
-    background: none;
-    border: none;
-    color: #ff6b6b;
-    font-size: 12px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  #clearHistoryBtn:hover { text-decoration: underline; }
-
-  #historyList { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
-
-  .history-item {
-    background: #16181d;
-    border: 1px solid #2a2d33;
-    border-radius: 6px;
-    padding: 10px 12px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-  }
-  .history-item:hover { border-color: #5b8cff; }
-  .history-item-text {
-    font-size: 13px;
-    color: #cfcfcf;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-  }
-  .history-item-meta {
-    font-size: 11px;
-    color: #6b7076;
-    white-space: nowrap;
-  }
-  .history-item-delete {
-    background: none;
-    border: none;
-    color: #6b7076;
-    font-size: 14px;
-    cursor: pointer;
-    padding: 2px 6px;
-    line-height: 1;
-  }
-  .history-item-delete:hover { color: #ff6b6b; }
-  .history-empty { color: #6b7076; font-size: 13px; padding: 6px 0; }
-
-  textarea {
     width: 100%;
-    min-height: 70px;
-    background: #1f2126;
-    border: 1px solid #33363c;
-    color: #e6e6e6;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    padding: 12px;
-    border-radius: 6px;
-    resize: vertical;
-  }
-  textarea:focus { outline: none; border-color: #5b8cff; }
-  textarea::placeholder { color: #666; }
-
-  .mode-row { display: flex; gap: 10px; margin-top: 12px; }
-
-  .mode-btn {
-    flex: 1;
-    background: #1f2126;
-    border: 1px solid #33363c;
-    color: #9a9a9a;
-    font-weight: 600;
-    font-size: 13px;
-    padding: 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    text-align: left;
-  }
-  .mode-btn small { display: block; font-weight: 400; color: #6b7076; margin-top: 2px; }
-  .mode-btn.active { border-color: #5b8cff; background: #1e2a4a; color: #e6e6e6; }
-  .mode-btn.active small { color: #9db3ff; }
-
-  button.run {
-    background: #5b8cff;
-    color: #fff;
-    border: none;
-    font-weight: 600;
-    font-size: 14px;
-    padding: 12px 22px;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-top: 14px;
-  }
-  button.run:hover:not(:disabled) { background: #4a76e0; }
-  button.run:disabled { background: #444; cursor: not-allowed; }
-
-  #downloadBtn {
-    display: none;
-    background: #2d3138;
-    color: #e6e6e6;
-    border: none;
-    font-weight: 600;
-    font-size: 14px;
-    padding: 12px 22px;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-top: 14px;
-    margin-left: 8px;
-  }
-  #downloadBtn:hover { background: #383d45; }
-
-  #loading { display: none; color: #9a9a9a; font-size: 13px; margin-top: 14px; }
-  #loading::before {
-    content: '';
-    display: inline-block;
-    width: 8px; height: 8px;
-    background: #5b8cff;
-    border-radius: 50%;
-    margin-right: 8px;
-    animation: pulse 1s infinite ease-in-out;
-  }
-  @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-
-  .card {
-    background: #1f2126;
-    border: 1px solid #33363c;
-    border-radius: 8px;
-    padding: 18px 20px;
-    margin-top: 14px;
-  }
-  .card h3 { margin: 0 0 10px; font-size: 15px; color: #5b8cff; }
-  .card.verdict h3 { color: #4caf7d; }
-  .card-body { font-size: 13px; line-height: 1.7; color: #cfcfcf; white-space: pre-wrap; }
-
-  #followupSection {
-    display: none;
-    margin-top: 24px;
-    border-top: 1px solid #33363c;
-    padding-top: 20px;
-  }
-  #followupSection h4 { font-size: 14px; color: #9db3ff; margin: 0 0 10px; }
-
-  #chatLog { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
-
-  .chat-q {
-    background: #1e2a4a;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 13px;
-    color: #cfd8ff;
-    align-self: flex-end;
-    max-width: 85%;
-  }
-  .chat-a {
-    background: #1f2126;
-    border: 1px solid #33363c;
-    border-radius: 8px;
-    padding: 12px 14px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: #cfcfcf;
-    white-space: pre-wrap;
-    align-self: flex-start;
-    max-width: 90%;
   }
 
-  .followup-row { display: flex; gap: 8px; }
-
-  #followupInput {
-    flex: 1;
-    background: #1f2126;
-    border: 1px solid #33363c;
-    color: #e6e6e6;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    padding: 10px 12px;
-    border-radius: 6px;
+  .mode-row {
+    flex-direction: column;
   }
-  #followupInput:focus { outline: none; border-color: #5b8cff; }
+
+  .followup-row {
+    flex-direction: column;
+  }
 
   #askBtn {
-    background: #5b8cff;
-    color: #fff;
-    border: none;
-    font-weight: 600;
-    font-size: 13px;
-    padding: 10px 18px;
-    border-radius: 6px;
-    cursor: pointer;
+    width: 100%;
   }
-  #askBtn:hover:not(:disabled) { background: #4a76e0; }
-  #askBtn:disabled { background: #444; cursor: not-allowed; }
+
+  #downloadBtn {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  button.run {
+    width: 100%;
+  }
+}
 </style>
 </head>
+
 <body>
 
 <div class="wrap">
 
+  <!-- ================= HEADER ================= -->
+
   <div class="header-row">
+
     <header>
-      <h1>🏛️ AI War Room</h1>
-      <p>Type a problem below. Multiple AI agents will analyze, propose, critique, and judge solutions.</p>
+      <h1>AI War Room</h1>
+
+      <p>
+        Type a problem below. Multiple AI agents will analyze,
+        propose, critique, and judge solutions.
+      </p>
     </header>
-    <button id="historyToggleBtn" onclick="toggleHistoryPanel()">🕘 History</button>
+
+    <button
+      id="historyToggleBtn"
+      onclick="toggleHistoryPanel()">
+      History
+    </button>
+
   </div>
+
+  <!-- ================= HISTORY ================= -->
 
   <div id="historyPanel">
+
     <h4>
-      <span>Past runs (saved in this browser)</span>
-      <button id="clearHistoryBtn" onclick="clearHistory()">Clear all</button>
+      <span>Past runs</span>
+
+      <button
+        id="clearHistoryBtn"
+        onclick="clearHistory()">
+        Clear all
+      </button>
     </h4>
+
     <div id="historyList"></div>
+
   </div>
 
-  <textarea id="problemInput" placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"></textarea>
+  <!-- ================= PROBLEM ================= -->
+
+  <textarea
+    id="problemInput"
+    placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"></textarea>
+
+  <!-- ================= MODE ================= -->
 
   <div class="mode-row">
-    <button class="mode-btn" id="quickBtn" onclick="setMode('quick')">
+
+    <button
+      class="mode-btn"
+      id="quickBtn"
+      onclick="setMode('quick')">
+
       Quick
-      <small>4 agents · faster</small>
+
+      <small>
+        4 agents · faster
+      </small>
+
     </button>
-    <button class="mode-btn active" id="fullBtn" onclick="setMode('full')">
+
+    <button
+      class="mode-btn active"
+      id="fullBtn"
+      onclick="setMode('full')">
+
       Full
-      <small>8 agents · thorough</small>
+
+      <small>
+        8 agents · thorough
+      </small>
+
     </button>
+
   </div>
 
-  <br>
-  <button class="run" id="runBtn" onclick="runWarRoom()">Run War Room</button>
-  <button id="downloadBtn" onclick="downloadPDF()">⬇ Download as PDF</button>
-  <div id="loading">Running agents...</div>
+  <!-- ================= ACTIONS ================= -->
+
+  <button
+    class="run"
+    id="runBtn"
+    onclick="runWarRoom()">
+
+    Run War Room
+
+  </button>
+
+  <button
+    id="downloadBtn"
+    onclick="downloadPDF()">
+
+    Download PDF
+
+  </button>
+
+  <div id="loading">
+    Running agents...
+  </div>
+
+  <!-- ================= RESULTS ================= -->
 
   <div id="results"></div>
 
+  <!-- ================= FOLLOW UP ================= -->
+
   <div id="followupSection">
-    <h4>💬 Ask a follow-up</h4>
+
+    <h4>
+      Ask a follow-up
+    </h4>
+
     <div id="chatLog"></div>
+
     <div class="followup-row">
-      <input id="followupInput" type="text" placeholder="e.g. Why did Solution B lose?" />
-      <button id="askBtn" onclick="askFollowUp()">Ask</button>
+
+      <input
+        id="followupInput"
+        type="text"
+        placeholder="e.g. Why did Solution B lose?">
+
+      <button
+        id="askBtn"
+        onclick="askFollowUp()">
+
+        Ask
+
+      </button>
+
     </div>
+
   </div>
 
 </div>
 
+
 <script>
-let currentMode = 'full';
+
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
+
+let currentMode = "full";
 let lastResult = null;
-let lastProblem = '';
-
-const HISTORY_KEY = 'aiWarRoomHistory';
-const MAX_HISTORY_ITEMS = 30;
-
-function setMode(mode) {
-  currentMode = mode;
-  document.getElementById('quickBtn').classList.toggle('active', mode === 'quick');
-  document.getElementById('fullBtn').classList.toggle('active', mode === 'full');
-}
-
-function loadHistoryFromStorage() {
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    console.error('Failed to read history', e);
-    return [];
-  }
-}
-
-function saveHistoryToStorage(history) {
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-  } catch (e) {
-    console.error('Failed to save history (storage may be full)', e);
-  }
-}
-
-function saveRunToHistory(problem, result) {
-  const history = loadHistoryFromStorage();
-  const entry = {
-    id: Date.now(),
-    problem,
-    result,
-    chatLog: [],
-    timestamp: new Date().toISOString()
-  };
-  history.unshift(entry);
-  if (history.length > MAX_HISTORY_ITEMS) history.length = MAX_HISTORY_ITEMS;
-  saveHistoryToStorage(history);
-  renderHistory();
-  return entry.id;
-}
-
+let lastProblem = "";
 let currentHistoryId = null;
 
-function updateCurrentHistoryChatLog() {
-  if (currentHistoryId === null) return;
-  const history = loadHistoryFromStorage();
-  const entry = history.find(h => h.id === currentHistoryId);
-  if (!entry) return;
-  const chatLog = document.getElementById('chatLog');
-  entry.chatLog = Array.from(chatLog.children).map(div => ({
-    role: div.classList.contains('chat-q') ? 'q' : 'a',
-    text: div.textContent
-  }));
-  saveHistoryToStorage(history);
+const HISTORY_KEY = "aiWarRoomHistory";
+const MAX_HISTORY_ITEMS = 30;
+
+
+/* =========================================================
+   SVG ICONS
+========================================================= */
+
+const ICONS = {
+
+  analysis: `
+    <svg class="result-icon" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="M20 20l-4-4"></path>
+      <path d="M8 11h6"></path>
+      <path d="M11 8v6"></path>
+    </svg>
+  `,
+
+  solution: `
+    <svg class="result-icon" viewBox="0 0 24 24">
+      <path d="M9 18h6"></path>
+      <path d="M10 22h4"></path>
+      <path d="M8 14.5a7 7 0 1 1 8 0c-1.2.8-2 1.7-2 3.5h-4c0-1.8-.8-2.7-2-3.5z"></path>
+    </svg>
+  `,
+
+  refined: `
+    <svg class="result-icon" viewBox="0 0 24 24">
+      <path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3z"></path>
+      <path d="M19 3v4"></path>
+      <path d="M21 5h-4"></path>
+    </svg>
+  `,
+
+  cost: `
+    <svg class="result-icon" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="M15 8.5c-.7-.7-1.7-1-3-1-1.7 0-3 .9-3 2.2 0 1.4 1.2 1.9 3 2.3 1.8.4 3 1 3 2.4 0 1.4-1.3 2.3-3.1 2.3-1.4 0-2.5-.4-3.3-1.2"></path>
+      <path d="M12 6v12"></path>
+    </svg>
+  `,
+
+  feasibility: `
+    <svg class="result-icon" viewBox="0 0 24 24">
+      <path d="M4 20V10"></path>
+      <path d="M10 20V4"></path>
+      <path d="M16 20v-7"></path>
+      <path d="M22 20H2"></path>
+    </svg>
+  `,
+
+  redteam: `
+    <svg class="result-icon" viewBox="0 0 24 24">
+      <path d="M12 3l8 4v5c0 5-3.4 8-8 9-4.6-1-8-4-8-9V7l8-4z"></path>
+      <path d="M9 9l6 6"></path>
+      <path d="M15 9l-6 6"></path>
+    </svg>
+  `,
+
+  verdict: `
+    <svg class="result-icon" viewBox="0 0 24 24">
+      <path d="M8 4h8"></path>
+      <path d="M12 4v12"></path>
+      <path d="M7 20h10"></path>
+      <path d="M6 8h12"></path>
+      <path d="M5 8l-3 5h6L5 8z"></path>
+      <path d="M19 8l-3 5h6l-3-5z"></path>
+    </svg>
+  `
+};
+
+
+/* =========================================================
+   MODE
+========================================================= */
+
+function setMode(mode) {
+
+  currentMode = mode;
+
+  document
+    .getElementById("quickBtn")
+    .classList.toggle("active", mode === "quick");
+
+  document
+    .getElementById("fullBtn")
+    .classList.toggle("active", mode === "full");
 }
 
-function formatTimestamp(iso) {
-  const d = new Date(iso);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return sameDay ? time : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + time;
+
+/* =========================================================
+   SAFE HTML
+========================================================= */
+
+function escapeHTML(value) {
+
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-function renderHistory() {
-  const history = loadHistoryFromStorage();
-  const listEl = document.getElementById('historyList');
 
-  if (history.length === 0) {
-    listEl.innerHTML = '<div class="history-empty">No past runs yet. Run the War Room and it\'ll show up here.</div>';
+/* =========================================================
+   GET AGENT TEXT
+========================================================= */
+
+function getAgentText(agent) {
+
+  if (!agent) {
+    return "No result returned.";
+  }
+
+  if (typeof agent === "string") {
+    return agent;
+  }
+
+  if (typeof agent.analysis === "string") {
+    return agent.analysis;
+  }
+
+  return JSON.stringify(agent, null, 2);
+}
+
+
+/* =========================================================
+   CREATE RESULT CARD
+========================================================= */
+
+function createCard(icon, title, content, className = "") {
+
+  return `
+    <div class="card ${className}">
+
+      <div class="result-header">
+
+        ${icon}
+
+        <h3>
+          ${escapeHTML(title)}
+        </h3>
+
+      </div>
+
+      <div class="card-body">
+        ${escapeHTML(content)}
+      </div>
+
+    </div>
+  `;
+}
+
+
+/* =========================================================
+   RENDER RESULTS
+========================================================= */
+
+function renderResults(data) {
+
+  const results =
+    document.getElementById("results");
+
+  if (!data) {
+
+    results.innerHTML = createCard(
+      ICONS.analysis,
+      "Error",
+      "No data was returned from the server.",
+      "analysis-card"
+    );
+
     return;
   }
 
-  listEl.innerHTML = '';
-  history.forEach(entry => {
-    const item = document.createElement('div');
-    item.className = 'history-item';
-    item.onclick = () => loadHistoryItem(entry.id);
+  let html = "";
 
-    const textEl = document.createElement('div');
-    textEl.className = 'history-item-text';
-    textEl.textContent = entry.problem;
+  /* Problem Analysis */
 
-    const metaEl = document.createElement('div');
-    metaEl.className = 'history-item-meta';
-    metaEl.textContent = formatTimestamp(entry.timestamp);
+  html += createCard(
+    ICONS.analysis,
+    "Problem Analysis",
+    getAgentText(data.analysis),
+    "analysis-card"
+  );
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'history-item-delete';
-    deleteBtn.textContent = '✕';
-    deleteBtn.onclick = (e) => {
-      e.stopPropagation();
-      deleteHistoryItem(entry.id);
-    };
 
-    item.appendChild(textEl);
-    item.appendChild(metaEl);
-    item.appendChild(deleteBtn);
-    listEl.appendChild(item);
-  });
-}
+  /* Solution A */
 
-function loadHistoryItem(id) {
-  const history = loadHistoryFromStorage();
-  const entry = history.find(h => h.id === id);
-  if (!entry) return;
+  html += createCard(
+    ICONS.solution,
+    "Solution A",
+    getAgentText(data.solutionA),
+    "solution-card"
+  );
 
-  currentHistoryId = id;
-  lastResult = entry.result;
-  lastProblem = entry.problem;
-  currentMode = entry.result.mode;
-  setMode(currentMode);
 
-  document.getElementById('problemInput').value = entry.problem;
-  renderResults(entry.result);
+  /* Refined Solution */
 
-  const chatLog = document.getElementById('chatLog');
-  chatLog.innerHTML = '';
-  (entry.chatLog || []).forEach(msg => {
-    const div = document.createElement('div');
-    div.className = msg.role === 'q' ? 'chat-q' : 'chat-a';
-    div.textContent = msg.text;
-    chatLog.appendChild(div);
-  });
+  html += createCard(
+    ICONS.refined,
+    "Refined Winning Solution",
+    getAgentText(data.refined),
+    "refined-card"
+  );
 
-  document.getElementById('downloadBtn').style.display = 'inline-block';
-  document.getElementById('followupSection').style.display = 'block';
-  document.getElementById('historyPanel').style.display = 'none';
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+  /* Full Mode */
 
-function deleteHistoryItem(id) {
-  let history = loadHistoryFromStorage();
-  history = history.filter(h => h.id !== id);
-  saveHistoryToStorage(history);
-  renderHistory();
-  if (currentHistoryId === id) currentHistoryId = null;
-}
+  if (data.mode === "full") {
 
-function clearHistory() {
-  if (!confirm('Delete all saved runs from this browser? This cannot be undone.')) return;
-  localStorage.removeItem(HISTORY_KEY);
-  currentHistoryId = null;
-  renderHistory();
-}
+    html += createCard(
+      ICONS.solution,
+      "Solution B",
+      getAgentText(data.solutionB),
+      "solution-card"
+    );
 
-function toggleHistoryPanel() {
-  const panel = document.getElementById('historyPanel');
-  const isOpen = panel.style.display === 'block';
-  panel.style.display = isOpen ? 'none' : 'block';
-  if (!isOpen) renderHistory();
-}
+    html += createCard(
+      ICONS.cost,
+      "Cost Critique",
+      getAgentText(data.costReview),
+      "cost-card"
+    );
 
-function renderResults(data) {
-  const results = document.getElementById('results');
-  let html = `
-    <div class="card"><h3>🧩 Problem Analysis</h3><div class="card-body">${data.analysis.analysis}</div></div>
-    <div class="card"><h3>💡 Solution A</h3><div class="card-body">${data.solutionA.analysis}</div></div>
-    <div class="card"><h3>✨ Refined Solution A</h3><div class="card-body">${data.refined.analysis}</div></div>
-  `;
+    html += createCard(
+      ICONS.feasibility,
+      "Feasibility Critique",
+      getAgentText(data.feasibilityReview),
+      "feasibility-card"
+    );
 
-  if (data.mode === 'full') {
-    html += `
-      <div class="card"><h3>💡 Solution B</h3><div class="card-body">${data.solutionB.analysis}</div></div>
-      <div class="card"><h3>💰 Cost Critique (on B)</h3><div class="card-body">${data.costReview.analysis}</div></div>
-      <div class="card"><h3>🔧 Feasibility Critique (on B)</h3><div class="card-body">${data.feasibilityReview.analysis}</div></div>
-      <div class="card"><h3>⚔️ Red Team (on Winner)</h3><div class="card-body">${data.redTeamReview...
-      <div class="card verdict"><h3>⚖️ Final Verdict</h3><div class="card-body">${data.verdict.analysis}</div></div>
-    `;
+    html += createCard(
+      ICONS.redteam,
+      "Red Team Review",
+      getAgentText(data.redTeamReview),
+      "redteam-card"
+    );
+
+    html += createCard(
+      ICONS.verdict,
+      "Final Verdict",
+      getAgentText(data.verdict),
+      "verdict"
+    );
   }
+
 
   results.innerHTML = html;
 }
 
-async function runWarRoom() {
-  const problem = document.getElementById('problemInput').value;
-  if (!problem.trim()) {
-    alert('Please enter a problem first.');
-    return;
-  }
 
-  const btn = document.getElementById('runBtn');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const loading = document.getElementById('loading');
-  const results = document.getElementById('results');
-  const followupSection = document.getElementById('followupSection');
-  const chatLog = document.getElementById('chatLog');
+/* =========================================================
+   HISTORY - LOAD
+========================================================= */
 
-  btn.disabled = true;
-  downloadBtn.style.display = 'none';
-  followupSection.style.display = 'none';
-  chatLog.innerHTML = '';
-  loading.style.display = 'block';
-  results.innerHTML = '';
-  currentHistoryId = null;
-
-  const fullSteps = [
-    'Analyzing the problem...',
-    'Generating Solution A...',
-    'Refining Solution A...',
-    'Generating Solution B...',
-    'Running cost critique...',
-    'Running feasibility critique...',
-    'Red Team attacking Solution B...',
-    'Judge weighing both solutions...'
-  ];
-  const quickSteps = [
-    'Analyzing the problem...',
-    'Generating Solution A...',
-    'Refining Solution A...'
-  ];
-  const steps = currentMode === 'quick' ? quickSteps : fullSteps;
-
-  let stepIndex = 0;
-  loading.textContent = steps[0];
-  const stepTimer = setInterval(() => {
-    stepIndex = (stepIndex + 1) % steps.length;
-    loading.textContent = steps[stepIndex];
-  }, 6000);
+function loadHistoryFromStorage() {
 
   try {
-    const response = await fetch('/api/run', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ problem, mode: currentMode })
-    });
 
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error || 'Something went wrong.');
-    }
+    const raw =
+      localStorage.getItem(HISTORY_KEY);
 
-    const data = await response.json();
-    lastResult = data;
-    lastProblem = problem;
+    return raw ? JSON.parse(raw) : [];
 
-    renderResults(data);
-    downloadBtn.style.display = 'inline-block';
-    followupSection.style.display = 'block';
+  } catch (error) {
 
-    currentHistoryId = saveRunToHistory(problem, data);
-  } catch (err) {
-    results.innerHTML = `<div class="card">${err.message || 'Something went wrong. Please try again.'}</div>`;
-    console.error(err);
-  } finally {
-    clearInterval(stepTimer);
-    btn.disabled = false;
-    loading.style.display = 'none';
+    console.error(
+      "Failed to load history:",
+      error
+    );
+
+    return [];
   }
 }
 
-async function askFollowUp() {
-  const input = document.getElementById('followupInput');
-  const question = input.value.trim();
-  if (!question || !lastResult) return;
 
-  const askBtn = document.getElementById('askBtn');
-  const chatLog = document.getElementById('chatLog');
+/* =========================================================
+   HISTORY - SAVE
+========================================================= */
 
-  const qDiv = document.createElement('div');
-  qDiv.className = 'chat-q';
-  qDiv.textContent = question;
-  chatLog.appendChild(qDiv);
-
-  const aDiv = document.createElement('div');
-  aDiv.className = 'chat-a';
-  aDiv.textContent = 'Thinking...';
-  chatLog.appendChild(aDiv);
-
-  input.value = '';
-  askBtn.disabled = true;
-
-  const context = {
-    problem: lastProblem,
-    analysis: lastResult.analysis.analysis,
-    solutionA: lastResult.refined.analysis,
-    solutionB: lastResult.mode === 'full' ? lastResult.solutionB.analysis : null,
-    verdict: lastResult.mode === 'full' ? lastResult.verdict.analysis : null
-  };
+function saveHistoryToStorage(history) {
 
   try {
-    const response = await fetch('/api/followup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ context, question })
+
+    localStorage.setItem(
+      HISTORY_KEY,
+      JSON.stringify(history)
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Failed to save history:",
+      error
+    );
+  }
+}
+
+
+/* =========================================================
+   SAVE RUN
+========================================================= */
+
+function saveRunToHistory(problem, result) {
+
+  const history =
+    loadHistoryFromStorage();
+
+  const entry = {
+
+    id: Date.now(),
+
+    problem: problem,
+
+    result: result,
+
+    chatLog: [],
+
+    timestamp:
+      new Date().toISOString()
+  };
+
+  history.unshift(entry);
+
+  if (history.length > MAX_HISTORY_ITEMS) {
+
+    history.length =
+      MAX_HISTORY_ITEMS;
+  }
+
+  saveHistoryToStorage(history);
+
+  renderHistory();
+
+  return entry.id;
+}
+
+
+/* =========================================================
+   TIMESTAMP
+========================================================= */
+
+function formatTimestamp(iso) {
+
+  const date = new Date(iso);
+
+  const now = new Date();
+
+  const sameDay =
+    date.toDateString() ===
+    now.toDateString();
+
+  const time =
+    date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
     });
 
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error || 'Something went wrong.');
+  if (sameDay) {
+    return time;
+  }
+
+  return (
+    date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric"
+    })
+    + " "
+    + time
+  );
+}
+
+
+/* =========================================================
+   RENDER HISTORY
+========================================================= */
+
+function renderHistory() {
+
+  const history =
+    loadHistoryFromStorage();
+
+  const list =
+    document.getElementById(
+      "historyList"
+    );
+
+  if (history.length === 0) {
+
+    list.innerHTML =
+      `<div class="history-empty">
+        No past runs yet.
+      </div>`;
+
+    return;
+  }
+
+  list.innerHTML = "";
+
+  history.forEach(entry => {
+
+    const item =
+      document.createElement("div");
+
+    item.className =
+      "history-item";
+
+    item.onclick = () =>
+      loadHistoryItem(entry.id);
+
+
+    const text =
+      document.createElement("div");
+
+    text.className =
+      "history-item-text";
+
+    text.textContent =
+      entry.problem;
+
+
+    const meta =
+      document.createElement("div");
+
+    meta.className =
+      "history-item-meta";
+
+    meta.textContent =
+      formatTimestamp(entry.timestamp);
+
+
+    const deleteButton =
+      document.createElement("button");
+
+    deleteButton.className =
+      "history-item-delete";
+
+    deleteButton.textContent =
+      "×";
+
+    deleteButton.onclick = event => {
+
+      event.stopPropagation();
+
+      deleteHistoryItem(entry.id);
+    };
+
+
+    item.appendChild(text);
+
+    item.appendChild(meta);
+
+    item.appendChild(deleteButton);
+
+    list.appendChild(item);
+  });
+}
+
+
+/* =========================================================
+   LOAD HISTORY ITEM
+========================================================= */
+
+function loadHistoryItem(id) {
+
+  const history =
+    loadHistoryFromStorage();
+
+  const entry =
+    history.find(item =>
+      item.id === id
+    );
+
+  if (!entry) {
+    return;
+  }
+
+  currentHistoryId = id;
+
+  lastResult = entry.result;
+
+  lastProblem = entry.problem;
+
+  currentMode =
+    entry.result.mode || "full";
+
+  setMode(currentMode);
+
+  document.getElementById(
+    "problemInput"
+  ).value = entry.problem;
+
+  renderResults(entry.result);
+
+
+  const chatLog =
+    document.getElementById(
+      "chatLog"
+    );
+
+  chatLog.innerHTML = "";
+
+
+  (entry.chatLog || []).forEach(message => {
+
+    const div =
+      document.createElement("div");
+
+    div.className =
+      message.role === "q"
+        ? "chat-q"
+        : "chat-a";
+
+    div.textContent =
+      message.text;
+
+    chatLog.appendChild(div);
+  });
+
+
+  document.getElementById(
+    "downloadBtn"
+  ).style.display =
+    "inline-block";
+
+
+  document.getElementById(
+    "followupSection"
+  ).style.display =
+    "block";
+
+
+  document.getElementById(
+    "historyPanel"
+  ).style.display =
+    "none";
+
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+
+/* =========================================================
+   DELETE HISTORY
+========================================================= */
+
+function deleteHistoryItem(id) {
+
+  let history =
+    loadHistoryFromStorage();
+
+  history =
+    history.filter(
+      item => item.id !== id
+    );
+
+  saveHistoryToStorage(history);
+
+  renderHistory();
+
+  if (currentHistoryId === id) {
+
+    currentHistoryId = null;
+  }
+}
+
+
+/* =========================================================
+   CLEAR HISTORY
+========================================================= */
+
+function clearHistory() {
+
+  if (
+    !confirm(
+      "Delete all saved runs from this browser?"
+    )
+  ) {
+    return;
+  }
+
+  localStorage.removeItem(
+    HISTORY_KEY
+  );
+
+  currentHistoryId = null;
+
+  renderHistory();
+}
+
+
+/* =========================================================
+   TOGGLE HISTORY
+========================================================= */
+
+function toggleHistoryPanel() {
+
+  const panel =
+    document.getElementById(
+      "historyPanel"
+    );
+
+  const open =
+    panel.style.display === "block";
+
+  panel.style.display =
+    open ? "none" : "block";
+
+  if (!open) {
+    renderHistory();
+  }
+}
+
+
+/* =========================================================
+   UPDATE CHAT HISTORY
+========================================================= */
+
+function updateCurrentHistoryChatLog() {
+
+  if (currentHistoryId === null) {
+    return;
+  }
+
+  const history =
+    loadHistoryFromStorage();
+
+  const entry =
+    history.find(item =>
+      item.id === currentHistoryId
+    );
+
+  if (!entry) {
+    return;
+  }
+
+  const chatLog =
+    document.getElementById(
+      "chatLog"
+    );
+
+  entry.chatLog =
+    Array.from(chatLog.children)
+      .map(div => ({
+
+        role:
+          div.classList.contains(
+            "chat-q"
+          )
+            ? "q"
+            : "a",
+
+        text:
+          div.textContent
+      }));
+
+  saveHistoryToStorage(history);
+}
+
+
+/* =========================================================
+   RUN WAR ROOM
+========================================================= */
+
+async function runWarRoom() {
+
+  const problem =
+    document.getElementById(
+      "problemInput"
+    ).value.trim();
+
+
+  if (!problem) {
+
+    alert(
+      "Please enter a problem first."
+    );
+
+    return;
+  }
+
+
+  const runButton =
+    document.getElementById(
+      "runBtn"
+    );
+
+  const downloadButton =
+    document.getElementById(
+      "downloadBtn"
+    );
+
+  const loading =
+    document.getElementById(
+      "loading"
+    );
+
+  const results =
+    document.getElementById(
+      "results"
+    );
+
+  const followup =
+    document.getElementById(
+      "followupSection"
+    );
+
+  const chatLog =
+    document.getElementById(
+      "chatLog"
+    );
+
+
+  runButton.disabled = true;
+
+  downloadButton.style.display =
+    "none";
+
+  followup.style.display =
+    "none";
+
+  chatLog.innerHTML = "";
+
+  results.innerHTML = "";
+
+  loading.style.display =
+    "block";
+
+  currentHistoryId = null;
+
+
+  const fullSteps = [
+
+    "Analyzing the problem...",
+
+    "Generating Solution A...",
+
+    "Refining Solution A...",
+
+    "Generating Solution B...",
+
+    "Running cost critique...",
+
+    "Running feasibility critique...",
+
+    "Red Team attacking Solution B...",
+
+    "Judge weighing both solutions..."
+  ];
+
+
+  const quickSteps = [
+
+    "Analyzing the problem...",
+
+    "Generating Solution A...",
+
+    "Refining Solution A..."
+  ];
+
+
+  const steps =
+    currentMode === "quick"
+      ? quickSteps
+      : fullSteps;
+
+
+  let stepIndex = 0;
+
+  loading.textContent =
+    steps[0];
+
+
+  const timer =
+    setInterval(() => {
+
+      stepIndex =
+        (stepIndex + 1) %
+        steps.length;
+
+      loading.textContent =
+        steps[stepIndex];
+
+    }, 6000);
+
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/run",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+
+            problem: problem,
+
+            mode: currentMode
+
+          })
+        }
+      );
+
+
+    let data;
+
+    try {
+
+      data =
+        await response.json();
+
+    } catch {
+
+      throw new Error(
+        "Server returned invalid JSON."
+      );
     }
 
-    const data = await response.json();
-    aDiv.textContent = data.answer;
-  } catch (err) {
-    aDiv.textContent = err.message || 'Something went wrong. Please try again.';
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Something went wrong."
+      );
+    }
+
+
+    lastResult = data;
+
+    lastProblem = problem;
+
+
+    renderResults(data);
+
+
+    downloadButton.style.display =
+      "inline-block";
+
+
+    followup.style.display =
+      "block";
+
+
+    currentHistoryId =
+      saveRunToHistory(
+        problem,
+        data
+      );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    results.innerHTML =
+      createCard(
+        ICONS.analysis,
+        "Error",
+        error.message ||
+          "Something went wrong. Please try again.",
+        "analysis-card"
+      );
+
   } finally {
-    askBtn.disabled = false;
+
+    clearInterval(timer);
+
+    runButton.disabled = false;
+
+    loading.style.display =
+      "none";
+  }
+}
+
+
+/* =========================================================
+   FOLLOW-UP
+========================================================= */
+
+async function askFollowUp() {
+
+  const input =
+    document.getElementById(
+      "followupInput"
+    );
+
+  const question =
+    input.value.trim();
+
+
+  if (!question || !lastResult) {
+    return;
+  }
+
+
+  const askButton =
+    document.getElementById(
+      "askBtn"
+    );
+
+  const chatLog =
+    document.getElementById(
+      "chatLog"
+    );
+
+
+  const questionDiv =
+    document.createElement("div");
+
+  questionDiv.className =
+    "chat-q";
+
+  questionDiv.textContent =
+    question;
+
+  chatLog.appendChild(
+    questionDiv
+  );
+
+
+  const answerDiv =
+    document.createElement("div");
+
+  answerDiv.className =
+    "chat-a";
+
+  answerDiv.textContent =
+    "Thinking...";
+
+  chatLog.appendChild(
+    answerDiv
+  );
+
+
+  input.value = "";
+
+  askButton.disabled = true;
+
+
+  const context = {
+
+    problem:
+      lastProblem,
+
+    analysis:
+      getAgentText(
+        lastResult.analysis
+      ),
+
+    solutionA:
+      getAgentText(
+        lastResult.refined
+      ),
+
+    solutionB:
+      lastResult.mode === "full"
+        ? getAgentText(
+            lastResult.solutionB
+          )
+        : null,
+
+    verdict:
+      lastResult.mode === "full"
+        ? getAgentText(
+            lastResult.verdict
+          )
+        : null
+  };
+
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/followup",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+
+            context: context,
+
+            question: question
+          })
+        }
+      );
+
+
+    let data;
+
+    try {
+
+      data =
+        await response.json();
+
+    } catch {
+
+      throw new Error(
+        "Server returned invalid JSON."
+      );
+    }
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Something went wrong."
+      );
+    }
+
+
+    answerDiv.textContent =
+      data.answer ||
+      "No answer returned.";
+
+
+  } catch (error) {
+
+    answerDiv.textContent =
+      error.message ||
+      "Something went wrong.";
+
+  } finally {
+
+    askButton.disabled = false;
+
     updateCurrentHistoryChatLog();
   }
 }
 
-function downloadPDF() {
-  if (!lastResult) return;
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
+/* =========================================================
+   ENTER KEY FOR FOLLOW-UP
+========================================================= */
+
+document
+  .getElementById("followupInput")
+  .addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Enter"
+      ) {
+
+        event.preventDefault();
+
+        askFollowUp();
+      }
+    }
+  );
+
+
+/* =========================================================
+   DOWNLOAD PDF
+========================================================= */
+
+function downloadPDF() {
+
+  if (!lastResult) {
+    return;
+  }
+
+
+  if (
+    !window.jspdf ||
+    !window.jspdf.jsPDF
+  ) {
+
+    alert(
+      "PDF library could not be loaded."
+    );
+
+    return;
+  }
+
+
+  const { jsPDF } =
+    window.jspdf;
+
+
+  const doc =
+    new jsPDF();
+
+
+  const pageWidth =
+    doc.internal.pageSize.getWidth();
+
+
+  const pageHeight =
+    doc.internal.pageSize.getHeight();
+
+
   const margin = 15;
-  const maxWidth = pageWidth - margin * 2;
+
+  const maxWidth =
+    pageWidth - margin * 2;
+
+
   let y = 20;
 
-  function addSection(title, text) {
-    if (y > 270) { doc.addPage(); y = 20; }
-    doc.setFont('helvetica', 'bold');
+
+  function ensureSpace(height) {
+
+    if (
+      y + height >
+      pageHeight - 15
+    ) {
+
+      doc.addPage();
+
+      y = 20;
+    }
+  }
+
+
+  function addSection(
+    title,
+    text
+  ) {
+
+    text =
+      text || "No result.";
+
+
+    ensureSpace(20);
+
+
+    doc.setFont(
+      "helvetica",
+      "bold"
+    );
+
     doc.setFontSize(13);
-    doc.text(title, margin, y);
+
+    doc.text(
+      title,
+      margin,
+      y
+    );
+
     y += 8;
-    doc.setFont('helvetica', 'normal');
+
+
+    doc.setFont(
+      "helvetica",
+      "normal"
+    );
+
     doc.setFontSize(10);
-    const lines = doc.splitTextToSize(text, maxWidth);
+
+
+    const lines =
+      doc.splitTextToSize(
+        String(text),
+        maxWidth
+      );
+
+
     lines.forEach(line => {
-      if (y > 280) { doc.addPage(); y = 20; }
-      doc.text(line, margin, y);
+
+      ensureSpace(6);
+
+      doc.text(
+        line,
+        margin,
+        y
+      );
+
       y += 5.5;
     });
+
+
     y += 8;
   }
 
-  doc.setFont('helvetica', 'bold');
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
   doc.setFontSize(18);
-  doc.text('AI War Room Report', margin, y);
+
+  doc.text(
+    "AI War Room Report",
+    margin,
+    y
+  );
+
   y += 10;
-  doc.setFont('helvetica', 'italic');
+
+
+  doc.setFont(
+    "helvetica",
+    "italic"
+  );
+
   doc.setFontSize(11);
-  const problemLines = doc.splitTextToSize('Problem: ' + lastProblem, maxWidth);
-  problemLines.forEach(line => { doc.text(line, margin, y); y += 6; });
+
+
+  const problemLines =
+    doc.splitTextToSize(
+      "Problem: " +
+      lastProblem,
+      maxWidth
+    );
+
+
+  problemLines.forEach(line => {
+
+    ensureSpace(6);
+
+    doc.text(
+      line,
+      margin,
+      y
+    );
+
+    y += 6;
+  });
+
+
   y += 6;
 
-  addSection('Problem Analysis', lastResult.analysis.analysis);
-  addSection('Solution A', lastResult.solutionA.analysis);
-  addSection('Refined Solution A', lastResult.refined.analysis);
 
-  if (lastResult.mode === 'full') {
-    addSection('Solution B', lastResult.solutionB.analysis);
-    addSection('Cost Critique (on B)', lastResult.costReview.analysis);
-    addSection('Feasibility Critique (on B)', lastResult.feasibilityReview.analysis);
-    addSection('Red Team (on Winner)', lastResult.redTeamReview.analysis);
-    addSection('Final Verdict', lastResult.verdict.analysis);
+  addSection(
+    "Problem Analysis",
+    getAgentText(
+      lastResult.analysis
+    )
+  );
+
+
+  addSection(
+    "Solution A",
+    getAgentText(
+      lastResult.solutionA
+    )
+  );
+
+
+  addSection(
+    "Refined Winning Solution",
+    getAgentText(
+      lastResult.refined
+    )
+  );
+
+
+  if (
+    lastResult.mode ===
+    "full"
+  ) {
+
+    addSection(
+      "Solution B",
+      getAgentText(
+        lastResult.solutionB
+      )
+    );
+
+
+    addSection(
+      "Cost Critique",
+      getAgentText(
+        lastResult.costReview
+      )
+    );
+
+
+    addSection(
+      "Feasibility Critique",
+      getAgentText(
+        lastResult.feasibilityReview
+      )
+    );
+
+
+    addSection(
+      "Red Team Review",
+      getAgentText(
+        lastResult.redTeamReview
+      )
+    );
+
+
+    addSection(
+      "Final Verdict",
+      getAgentText(
+        lastResult.verdict
+      )
+    );
   }
 
-  doc.save('ai-war-room-report.pdf');
+
+  doc.save(
+    "ai-war-room-report.pdf"
+  );
 }
 
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
 renderHistory();
+
 </script>
 
 </body>
