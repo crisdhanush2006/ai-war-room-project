@@ -15,10 +15,10 @@ async function runWarRoom(problem, mode = 'full', onEvent = () => {}) {
   onEvent('solutionA', solutionA);
 
   if (mode === 'quick') {
-    const refinedA = await refineSolution(solutionA.analysis);
-    onEvent('refinedA', refinedA);
+    const refined = await refineSolution(solutionA.analysis);
+    onEvent('refined', refined);
 
-    const result = { mode, problem, analysis, solutionA, refinedA };
+    const result = { mode, problem, analysis, solutionA, refined };
     onEvent('done', result);
     return result;
   }
