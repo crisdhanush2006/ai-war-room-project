@@ -21,7 +21,88 @@
   .wrap { max-width: 700px; margin: 0 auto; }
 
   h1 { font-size: 32px; margin: 0 0 8px; }
-  header p { color: #9a9a9a; font-size: 14px; margin: 0 0 30px; }
+  header p { color: #9a9a9a; font-size: 14px; margin: 0 0 20px; }
+
+  .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+
+  #historyToggleBtn {
+    background: #1f2126;
+    border: 1px solid #33363c;
+    color: #9db3ff;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-top: 4px;
+  }
+  #historyToggleBtn:hover { background: #262930; }
+
+  #historyPanel {
+    display: none;
+    background: #1f2126;
+    border: 1px solid #33363c;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  #historyPanel h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: #9db3ff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #clearHistoryBtn {
+    background: none;
+    border: none;
+    color: #ff6b6b;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  #clearHistoryBtn:hover { text-decoration: underline; }
+
+  #historyList { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
+
+  .history-item {
+    background: #16181d;
+    border: 1px solid #2a2d33;
+    border-radius: 6px;
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .history-item:hover { border-color: #5b8cff; }
+  .history-item-text {
+    font-size: 13px;
+    color: #cfcfcf;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .history-item-meta {
+    font-size: 11px;
+    color: #6b7076;
+    white-space: nowrap;
+  }
+  .history-item-delete {
+    background: none;
+    border: none;
+    color: #6b7076;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    line-height: 1;
+  }
+  .history-item-delete:hover { color: #ff6b6b; }
+  .history-empty { color: #6b7076; font-size: 13px; padding: 6px 0; }
 
   textarea {
     width: 100%;
@@ -172,10 +253,21 @@
 
 <div class="wrap">
 
-  <header>
-    <h1>🏛️ AI War Room</h1>
-    <p>Type a problem below. Multiple AI agents will analyze, propose, critique, and judge solutions.</p>
-  </header>
+  <div class="header-row">
+    <header>
+      <h1>🏛️ AI War Room</h1>
+      <p>Type a problem below. Multiple AI agents will analyze, propose, critique, and judge solutions.</p>
+    </header>
+    <button id="historyToggleBtn" onclick="toggleHistoryPanel()">🕘 History</button>
+  </div>
+
+  <div id="historyPanel">
+    <h4>
+      <span>Past runs (saved in this browser)</span>
+      <button id="clearHistoryBtn" onclick="clearHistory()">Clear all</button>
+    </h4>
+    <div id="historyList"></div>
+  </div>
 
   <textarea id="problemInput" placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"></textarea>
 
@@ -213,10 +305,181 @@ let currentMode = 'full';
 let lastResult = null;
 let lastProblem = '';
 
+const HISTORY_KEY = 'aiWarRoomHistory';
+const MAX_HISTORY_ITEMS = 30;
+
 function setMode(mode) {
   currentMode = mode;
   document.getElementById('quickBtn').classList.toggle('active', mode === 'quick');
   document.getElementById('fullBtn').classList.toggle('active', mode === 'full');
+}
+
+function loadHistoryFromStorage() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Failed to read history', e);
+    return [];
+  }
+}
+
+function saveHistoryToStorage(history) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch (e) {
+    console.error('Failed to save history (storage may be full)', e);
+  }
+}
+
+function saveRunToHistory(problem, result) {
+  const history = loadHistoryFromStorage();
+  const entry = {
+    id: Date.now(),
+    problem,
+    result,
+    chatLog: [],
+    timestamp: new Date().toISOString()
+  };
+  history.unshift(entry);
+  if (history.length > MAX_HISTORY_ITEMS) history.length = MAX_HISTORY_ITEMS;
+  saveHistoryToStorage(history);
+  renderHistory();
+  return entry.id;
+}
+
+let currentHistoryId = null;
+
+function updateCurrentHistoryChatLog() {
+  if (currentHistoryId === null) return;
+  const history = loadHistoryFromStorage();
+  const entry = history.find(h => h.id === currentHistoryId);
+  if (!entry) return;
+  const chatLog = document.getElementById('chatLog');
+  entry.chatLog = Array.from(chatLog.children).map(div => ({
+    role: div.classList.contains('chat-q') ? 'q' : 'a',
+    text: div.textContent
+  }));
+  saveHistoryToStorage(history);
+}
+
+function formatTimestamp(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return sameDay ? time : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + time;
+}
+
+function renderHistory() {
+  const history = loadHistoryFromStorage();
+  const listEl = document.getElementById('historyList');
+
+  if (history.length === 0) {
+    listEl.innerHTML = '<div class="history-empty">No past runs yet. Run the War Room and it\'ll show up here.</div>';
+    return;
+  }
+
+  listEl.innerHTML = '';
+  history.forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.onclick = () => loadHistoryItem(entry.id);
+
+    const textEl = document.createElement('div');
+    textEl.className = 'history-item-text';
+    textEl.textContent = entry.problem;
+
+    const metaEl = document.createElement('div');
+    metaEl.className = 'history-item-meta';
+    metaEl.textContent = formatTimestamp(entry.timestamp);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'history-item-delete';
+    deleteBtn.textContent = '✕';
+    deleteBtn.onclick = (e) => {
+      e.stopPropagation();
+      deleteHistoryItem(entry.id);
+    };
+
+    item.appendChild(textEl);
+    item.appendChild(metaEl);
+    item.appendChild(deleteBtn);
+    listEl.appendChild(item);
+  });
+}
+
+function loadHistoryItem(id) {
+  const history = loadHistoryFromStorage();
+  const entry = history.find(h => h.id === id);
+  if (!entry) return;
+
+  currentHistoryId = id;
+  lastResult = entry.result;
+  lastProblem = entry.problem;
+  currentMode = entry.result.mode;
+  setMode(currentMode);
+
+  document.getElementById('problemInput').value = entry.problem;
+  renderResults(entry.result);
+
+  const chatLog = document.getElementById('chatLog');
+  chatLog.innerHTML = '';
+  (entry.chatLog || []).forEach(msg => {
+    const div = document.createElement('div');
+    div.className = msg.role === 'q' ? 'chat-q' : 'chat-a';
+    div.textContent = msg.text;
+    chatLog.appendChild(div);
+  });
+
+  document.getElementById('downloadBtn').style.display = 'inline-block';
+  document.getElementById('followupSection').style.display = 'block';
+  document.getElementById('historyPanel').style.display = 'none';
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function deleteHistoryItem(id) {
+  let history = loadHistoryFromStorage();
+  history = history.filter(h => h.id !== id);
+  saveHistoryToStorage(history);
+  renderHistory();
+  if (currentHistoryId === id) currentHistoryId = null;
+}
+
+function clearHistory() {
+  if (!confirm('Delete all saved runs from this browser? This cannot be undone.')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  currentHistoryId = null;
+  renderHistory();
+}
+
+function toggleHistoryPanel() {
+  const panel = document.getElementById('historyPanel');
+  const isOpen = panel.style.display === 'block';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) renderHistory();
+}
+
+function renderResults(data) {
+  const results = document.getElementById('results');
+  let html = `
+    <div class="card"><h3>🧩 Problem Analysis</h3><div class="card-body">${data.analysis.analysis}</div></div>
+    <div class="card"><h3>💡 Solution A</h3><div class="card-body">${data.solutionA.analysis}</div></div>
+    <div class="card"><h3>✨ Refined Solution A</h3><div class="card-body">${data.refinedA.analysis}</div></div>
+  `;
+
+  if (data.mode === 'full') {
+    html += `
+      <div class="card"><h3>💡 Solution B</h3><div class="card-body">${data.solutionB.analysis}</div></div>
+      <div class="card"><h3>💰 Cost Critique (on B)</h3><div class="card-body">${data.costReview.analysis}</div></div>
+      <div class="card"><h3>🔧 Feasibility Critique (on B)</h3><div class="card-body">${data.feasibilityReview.analysis}</div></div>
+      <div class="card"><h3>⚔️ Red Team (on B)</h3><div class="card-body">${data.redTeamReview.analysis}</div></div>
+      <div class="card verdict"><h3>⚖️ Final Verdict</h3><div class="card-body">${data.verdict.analysis}</div></div>
+    `;
+  }
+
+  results.innerHTML = html;
 }
 
 async function runWarRoom() {
@@ -239,6 +502,7 @@ async function runWarRoom() {
   chatLog.innerHTML = '';
   loading.style.display = 'block';
   results.innerHTML = '';
+  currentHistoryId = null;
 
   const fullSteps = [
     'Analyzing the problem...',
@@ -280,25 +544,11 @@ async function runWarRoom() {
     lastResult = data;
     lastProblem = problem;
 
-    let html = `
-      <div class="card"><h3>🧩 Problem Analysis</h3><div class="card-body">${data.analysis.analysis}</div></div>
-      <div class="card"><h3>💡 Solution A</h3><div class="card-body">${data.solutionA.analysis}</div></div>
-      <div class="card"><h3>✨ Refined Solution A</h3><div class="card-body">${data.refinedA.analysis}</div></div>
-    `;
-
-    if (data.mode === 'full') {
-      html += `
-        <div class="card"><h3>💡 Solution B</h3><div class="card-body">${data.solutionB.analysis}</div></div>
-        <div class="card"><h3>💰 Cost Critique (on B)</h3><div class="card-body">${data.costReview.analysis}</div></div>
-        <div class="card"><h3>🔧 Feasibility Critique (on B)</h3><div class="card-body">${data.feasibilityReview.analysis}</div></div>
-        <div class="card"><h3>⚔️ Red Team (on B)</h3><div class="card-body">${data.redTeamReview.analysis}</div></div>
-        <div class="card verdict"><h3>⚖️ Final Verdict</h3><div class="card-body">${data.verdict.analysis}</div></div>
-      `;
-    }
-
-    results.innerHTML = html;
+    renderResults(data);
     downloadBtn.style.display = 'inline-block';
     followupSection.style.display = 'block';
+
+    currentHistoryId = saveRunToHistory(problem, data);
   } catch (err) {
     results.innerHTML = `<div class="card">${err.message || 'Something went wrong. Please try again.'}</div>`;
     console.error(err);
@@ -356,6 +606,7 @@ async function askFollowUp() {
     aDiv.textContent = err.message || 'Something went wrong. Please try again.';
   } finally {
     askBtn.disabled = false;
+    updateCurrentHistoryChatLog();
   }
 }
 
@@ -410,6 +661,8 @@ function downloadPDF() {
 
   doc.save('ai-war-room-report.pdf');
 }
+
+renderHistory();
 </script>
 
 </body>
