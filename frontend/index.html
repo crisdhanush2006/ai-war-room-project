@@ -6,6 +6,7 @@
 <title>AI War Room</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   * { box-sizing: border-box; }
 
@@ -58,6 +59,13 @@
   }
   button:hover:not(:disabled) { background: #4a76e0; }
   button:disabled { background: #444; cursor: not-allowed; }
+
+  #downloadBtn {
+    display: none;
+    background: #2d3138;
+    margin-top: 20px;
+  }
+  #downloadBtn:hover { background: #383d45; }
 
   #loading {
     display: none;
@@ -115,6 +123,7 @@
   <textarea id="problemInput" placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"></textarea>
   <br>
   <button id="runBtn" onclick="runWarRoom()">Run War Room</button>
+  <button id="downloadBtn" onclick="downloadPDF()">⬇ Download as PDF</button>
   <div id="loading">Running agents...</div>
 
   <div id="results"></div>
@@ -122,6 +131,9 @@
 </div>
 
 <script>
+let lastResult = null;
+let lastProblem = '';
+
 async function runWarRoom() {
   const problem = document.getElementById('problemInput').value;
   if (!problem.trim()) {
@@ -130,10 +142,12 @@ async function runWarRoom() {
   }
 
   const btn = document.getElementById('runBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
   const loading = document.getElementById('loading');
   const results = document.getElementById('results');
 
   btn.disabled = true;
+  downloadBtn.style.display = 'none';
   loading.style.display = 'block';
   results.innerHTML = '';
 
@@ -167,6 +181,8 @@ async function runWarRoom() {
     }
 
     const data = await response.json();
+    lastResult = data;
+    lastProblem = problem;
 
     results.innerHTML = `
       <div class="card"><h3>🧩 Problem Analysis</h3><div class="card-body">${data.analysis.analysis}</div></div>
@@ -178,6 +194,8 @@ async function runWarRoom() {
       <div class="card"><h3>⚔️ Red Team (on B)</h3><div class="card-body">${data.redTeamReview.analysis}</div></div>
       <div class="card verdict"><h3>⚖️ Final Verdict</h3><div class="card-body">${data.verdict.analysis}</div></div>
     `;
+
+    downloadBtn.style.display = 'inline-block';
   } catch (err) {
     results.innerHTML = `<div class="card">${err.message || 'Something went wrong. Please try again.'}</div>`;
     console.error(err);
@@ -186,6 +204,55 @@ async function runWarRoom() {
     btn.disabled = false;
     loading.style.display = 'none';
   }
+}
+
+function downloadPDF() {
+  if (!lastResult) return;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  const maxWidth = pageWidth - margin * 2;
+  let y = 20;
+
+  function addSection(title, text) {
+    if (y > 270) { doc.addPage(); y = 20; }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text(title, margin, y);
+    y += 8;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    const lines = doc.splitTextToSize(text, maxWidth);
+    lines.forEach(line => {
+      if (y > 280) { doc.addPage(); y = 20; }
+      doc.text(line, margin, y);
+      y += 5.5;
+    });
+    y += 8;
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('AI War Room Report', margin, y);
+  y += 10;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(11);
+  const problemLines = doc.splitTextToSize('Problem: ' + lastProblem, maxWidth);
+  problemLines.forEach(line => { doc.text(line, margin, y); y += 6; });
+  y += 6;
+
+  addSection('Problem Analysis', lastResult.analysis.analysis);
+  addSection('Solution A', lastResult.solutionA.analysis);
+  addSection('Solution B', lastResult.solutionB.analysis);
+  addSection('Refined Solution A', lastResult.refinedA.analysis);
+  addSection('Cost Critique (on B)', lastResult.costReview.analysis);
+  addSection('Feasibility Critique (on B)', lastResult.feasibilityReview.analysis);
+  addSection('Red Team (on B)', lastResult.redTeamReview.analysis);
+  addSection('Final Verdict', lastResult.verdict.analysis);
+
+  doc.save('ai-war-room-report.pdf');
 }
 </script>
 
