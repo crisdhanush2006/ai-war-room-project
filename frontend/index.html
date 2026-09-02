@@ -807,7 +807,7 @@ function createCard(icon, title, content, className = "") {
 
 
 /* =========================================================
-   RENDER RESULTS
+   RENDER RESULTS (used for history playback)
 ========================================================= */
 
 function renderResults(data) {
@@ -1317,7 +1317,64 @@ function updateCurrentHistoryChatLog() {
 
 
 /* =========================================================
-   RUN WAR ROOM
+   EVENT -> CARD METADATA (for live streaming)
+========================================================= */
+
+const EVENT_CARD_MAP = {
+  analysis:          { icon: ICONS.analysis,    title: "Problem Analysis",         className: "analysis-card" },
+  solutionA:         { icon: ICONS.solution,    title: "Solution A",               className: "solution-card" },
+  solutionB:         { icon: ICONS.solution,    title: "Solution B",               className: "solution-card" },
+  costReview:        { icon: ICONS.cost,        title: "Cost Critique",            className: "cost-card" },
+  feasibilityReview: { icon: ICONS.feasibility, title: "Feasibility Critique",     className: "feasibility-card" },
+  verdict:           { icon: ICONS.verdict,     title: "Final Verdict",            className: "verdict" },
+  refined:           { icon: ICONS.refined,     title: "Refined Winning Solution", className: "refined-card" },
+  redTeamReview:     { icon: ICONS.redteam,     title: "Red Team Review",          className: "redteam-card" }
+};
+
+const STATUS_AFTER = {
+  analysis:          "Generating Solution A...",
+  solutionA:         mode => mode === "quick" ? "Refining the solution..." : "Generating Solution B...",
+  solutionB:         "Running cost critique...",
+  costReview:        "Running feasibility critique...",
+  feasibilityReview: "Judge weighing both solutions...",
+  verdict:           "Refining the winning solution...",
+  refined:           "Red Team attacking the solution...",
+  redTeamReview:     "Finalizing report..."
+};
+
+
+/* =========================================================
+   PARSE ONE SSE FRAME
+========================================================= */
+
+function parseSSEFrame(frame) {
+
+  let eventName = "message";
+  let dataLines = [];
+
+  frame.split("\n").forEach(line => {
+
+    if (line.startsWith("event:")) {
+      eventName = line.slice(6).trim();
+    } else if (line.startsWith("data:")) {
+      dataLines.push(line.slice(5).trim());
+    }
+  });
+
+  let data = null;
+
+  try {
+    data = JSON.parse(dataLines.join("\n"));
+  } catch {
+    data = dataLines.join("\n");
+  }
+
+  return { eventName, data };
+}
+
+
+/* =========================================================
+   RUN WAR ROOM (STREAMING)
 ========================================================= */
 
 async function runWarRoom() {
@@ -1326,7 +1383,6 @@ async function runWarRoom() {
     document.getElementById(
       "problemInput"
     ).value.trim();
-
 
   if (!problem) {
 
@@ -1337,203 +1393,173 @@ async function runWarRoom() {
     return;
   }
 
-
   const runButton =
-    document.getElementById(
-      "runBtn"
-    );
+    document.getElementById("runBtn");
 
   const downloadButton =
-    document.getElementById(
-      "downloadBtn"
-    );
+    document.getElementById("downloadBtn");
 
   const loading =
-    document.getElementById(
-      "loading"
-    );
+    document.getElementById("loading");
 
   const results =
-    document.getElementById(
-      "results"
-    );
+    document.getElementById("results");
 
   const followup =
-    document.getElementById(
-      "followupSection"
-    );
+    document.getElementById("followupSection");
 
   const chatLog =
-    document.getElementById(
-      "chatLog"
-    );
-
+    document.getElementById("chatLog");
 
   runButton.disabled = true;
-
-  downloadButton.style.display =
-    "none";
-
-  followup.style.display =
-    "none";
-
+  downloadButton.style.display = "none";
+  followup.style.display = "none";
   chatLog.innerHTML = "";
-
   results.innerHTML = "";
-
-  loading.style.display =
-    "block";
-
+  loading.style.display = "block";
+  loading.textContent = "Analyzing the problem...";
   currentHistoryId = null;
 
-
-  const fullSteps = [
-
-    "Analyzing the problem...",
-
-    "Generating Solution A...",
-
-    "Refining Solution A...",
-
-    "Generating Solution B...",
-
-    "Running cost critique...",
-
-    "Running feasibility critique...",
-
-    "Red Team attacking Solution B...",
-
-    "Judge weighing both solutions..."
-  ];
-
-
-  const quickSteps = [
-
-    "Analyzing the problem...",
-
-    "Generating Solution A...",
-
-    "Refining Solution A..."
-  ];
-
-
-  const steps =
-    currentMode === "quick"
-      ? quickSteps
-      : fullSteps;
-
-
-  let stepIndex = 0;
-
-  loading.textContent =
-    steps[0];
-
-
-  const timer =
-    setInterval(() => {
-
-      stepIndex =
-        (stepIndex + 1) %
-        steps.length;
-
-      loading.textContent =
-        steps[stepIndex];
-
-    }, 6000);
-
+  let finalResult = null;
+  let hadError = false;
 
   try {
 
     const response =
-      await fetch(
-        "/api/run",
-        {
-          method: "POST",
+      await fetch("/api/run-stream", {
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
+        method: "POST",
 
-          body: JSON.stringify({
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-            problem: problem,
+        body: JSON.stringify({
+          problem: problem,
+          mode: currentMode
+        })
+      });
 
-            mode: currentMode
+    if (!response.ok || !response.body) {
+      throw new Error("Could not connect to the server.");
+    }
 
-          })
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+
+      const { done, value } = await reader.read();
+
+      if (done) {
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+
+      let boundary;
+
+      while ((boundary = buffer.indexOf("\n\n")) !== -1) {
+
+        const frame = buffer.slice(0, boundary);
+
+        buffer = buffer.slice(boundary + 2);
+
+        if (!frame.trim()) {
+          continue;
         }
-      );
 
+        const { eventName, data } =
+          parseSSEFrame(frame);
 
-    let data;
+        if (eventName === "error") {
 
-    try {
+          hadError = true;
 
-      data =
-        await response.json();
+          results.innerHTML = createCard(
+            ICONS.analysis,
+            "Error",
+            (data && data.error) ||
+              "Something went wrong. Please try again.",
+            "analysis-card"
+          );
 
-    } catch {
+          break;
+        }
 
+        if (eventName === "done") {
+          finalResult = data;
+          continue;
+        }
+
+        const meta = EVENT_CARD_MAP[eventName];
+
+        if (meta) {
+
+          results.insertAdjacentHTML(
+            "beforeend",
+            createCard(
+              meta.icon,
+              meta.title,
+              getAgentText(data),
+              meta.className
+            )
+          );
+        }
+
+        const nextStatus =
+          STATUS_AFTER[eventName];
+
+        if (nextStatus) {
+
+          loading.textContent =
+            typeof nextStatus === "function"
+              ? nextStatus(currentMode)
+              : nextStatus;
+        }
+      }
+
+      if (hadError) {
+        break;
+      }
+    }
+
+    if (hadError) {
+      return;
+    }
+
+    if (!finalResult) {
       throw new Error(
-        "Server returned invalid JSON."
+        "Stream ended without a result."
       );
     }
 
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        "Something went wrong."
-      );
-    }
-
-
-    lastResult = data;
-
+    lastResult = finalResult;
     lastProblem = problem;
 
-
-    renderResults(data);
-
-
-    downloadButton.style.display =
-      "inline-block";
-
-
-    followup.style.display =
-      "block";
-
+    downloadButton.style.display = "inline-block";
+    followup.style.display = "block";
 
     currentHistoryId =
-      saveRunToHistory(
-        problem,
-        data
-      );
-
+      saveRunToHistory(problem, finalResult);
 
   } catch (error) {
 
     console.error(error);
 
-    results.innerHTML =
-      createCard(
-        ICONS.analysis,
-        "Error",
-        error.message ||
-          "Something went wrong. Please try again.",
-        "analysis-card"
-      );
+    results.innerHTML = createCard(
+      ICONS.analysis,
+      "Error",
+      error.message ||
+        "Something went wrong. Please try again.",
+      "analysis-card"
+    );
 
   } finally {
 
-    clearInterval(timer);
-
     runButton.disabled = false;
-
-    loading.style.display =
-      "none";
+    loading.style.display = "none";
   }
 }
 
