@@ -26,13 +26,26 @@ async function runWarRoom(problem, mode = 'full', onEvent = () => {}) {
   const solutionB = await generateSolutionB(analysis.analysis);
   onEvent('solutionB', solutionB);
 
-  const costReview = await critiqueCost(solutionB.analysis);
-  onEvent('costReview', costReview);
+  // Critique BOTH solutions on cost and feasibility
+  const costReviewA = await critiqueCost(solutionA.analysis);
+  onEvent('costReviewA', costReviewA);
 
-  const feasibilityReview = await critiqueFeasibility(solutionB.analysis);
-  onEvent('feasibilityReview', feasibilityReview);
+  const feasibilityReviewA = await critiqueFeasibility(solutionA.analysis);
+  onEvent('feasibilityReviewA', feasibilityReviewA);
 
-  const verdict = await judgeSolutions(solutionA.analysis, solutionB.analysis);
+  const costReviewB = await critiqueCost(solutionB.analysis);
+  onEvent('costReviewB', costReviewB);
+
+  const feasibilityReviewB = await critiqueFeasibility(solutionB.analysis);
+  onEvent('feasibilityReviewB', feasibilityReviewB);
+
+  // Pass all four critiques into the judge
+  const verdict = await judgeSolutions(solutionA.analysis, solutionB.analysis, {
+    costReviewA: costReviewA.analysis,
+    feasibilityReviewA: feasibilityReviewA.analysis,
+    costReviewB: costReviewB.analysis,
+    feasibilityReviewB: feasibilityReviewB.analysis
+  });
   onEvent('verdict', verdict);
 
   const winningSolution = verdict.winner === 'A' ? solutionA.analysis : solutionB.analysis;
@@ -42,10 +55,18 @@ async function runWarRoom(problem, mode = 'full', onEvent = () => {}) {
 
   const redTeamReview = await redTeamSolution(refined.analysis);
   onEvent('redTeamReview', redTeamReview);
+  const totalPastFindingsUsed =
+    (costReviewA.pastFindingsUsed || 0) +
+    (feasibilityReviewA.pastFindingsUsed || 0) +
+    (costReviewB.pastFindingsUsed || 0) +
+    (feasibilityReviewB.pastFindingsUsed || 0) +
+    (redTeamReview.pastFindingsUsed || 0);
 
   const result = {
     mode, problem, analysis, solutionA, solutionB,
-    costReview, feasibilityReview, verdict, refined, redTeamReview
+    costReviewA, feasibilityReviewA, costReviewB, feasibilityReviewB,
+    verdict, refined, redTeamReview,
+    totalPastFindingsUsed
   };
 
   onEvent('done', result);

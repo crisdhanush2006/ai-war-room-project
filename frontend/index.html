@@ -254,6 +254,19 @@ textarea::placeholder {
   background: #383d45;
 }
 
+/* ================= MEMORY BADGE ================= */
+
+#memoryBadge {
+  display: none;
+  background: #1e2a4a;
+  border: 1px solid #3d5aa8;
+  color: #9db3ff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 6px;
+  margin-top: 14px;
+}
 /* ================= LOADING ================= */
 
 #loading {
@@ -599,7 +612,9 @@ textarea::placeholder {
     Running agents...
   </div>
 
-  <!-- ================= RESULTS ================= -->
+    <!-- ================= RESULTS ================= -->
+
+  <div id="memoryBadge"></div>
 
   <div id="results"></div>
 
@@ -902,6 +917,16 @@ function renderResults(data) {
 
   results.innerHTML = html;
 }
+function updateMemoryBadge(data) {
+  const badge = document.getElementById("memoryBadge");
+  const count = data && data.totalPastFindingsUsed;
+  if (count && count > 0) {
+    badge.style.display = "block";
+    badge.textContent = "🧠 This analysis referenced " + count + " lesson(s) learned from past runs.";
+  } else {
+    badge.style.display = "none";
+  }
+}
 
 
 /* =========================================================
@@ -1145,7 +1170,8 @@ function loadHistoryItem(id) {
     "problemInput"
   ).value = entry.problem;
 
-  renderResults(entry.result);
+    renderResults(entry.result);
+  updateMemoryBadge(entry.result);
 
 
   const chatLog =
@@ -1534,12 +1560,13 @@ async function runWarRoom() {
         "Stream ended without a result."
       );
     }
-
     lastResult = finalResult;
     lastProblem = problem;
 
-    downloadButton.style.display = "inline-block";
+        downloadButton.style.display = "inline-block";
     followup.style.display = "block";
+
+    updateMemoryBadge(finalResult);
 
     currentHistoryId =
       saveRunToHistory(problem, finalResult);
