@@ -389,6 +389,37 @@ textarea::placeholder {
   color: #4caf7d;
 }
 
+/* ================= SCORECARD ================= */
+
+.scorecard {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.scorecard th,
+.scorecard td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid #2a2d33;
+}
+
+.scorecard th {
+  color: #9db3ff;
+  font-weight: 600;
+}
+
+.scorecard td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.scorecard tr.total td {
+  font-weight: 700;
+  color: white;
+  border-top: 2px solid #33363c;
+}
 /* ================= FOLLOW UP ================= */
 
 #followupSection {
@@ -794,6 +825,50 @@ function getAgentText(agent) {
 
 
 /* =========================================================
+   CREATE SCORECARD (Judge breakdown table)
+========================================================= */
+
+function createScorecard(breakdown, scores) {
+
+  if (!breakdown || !breakdown.solutionA || !breakdown.solutionB) {
+    return "";
+  }
+
+  const criteria = ["feasibility", "practicality", "cost", "reliability", "evidence", "scalability", "novelty"];
+
+  const rows = criteria.map(key => {
+    const a = breakdown.solutionA[key] ?? "-";
+    const b = breakdown.solutionB[key] ?? "-";
+    const label = key.charAt(0).toUpperCase() + key.slice(1);
+    return `<tr><td>${escapeHTML(label)}</td><td class="num">${escapeHTML(a)}</td><td class="num">${escapeHTML(b)}</td></tr>`;
+  }).join("");
+
+  const totalA = scores && scores.A !== null && scores.A !== undefined ? scores.A : "-";
+  const totalB = scores && scores.B !== null && scores.B !== undefined ? scores.B : "-";
+
+  return `
+    <div class="card verdict">
+      <div class="result-header">
+        ${ICONS.verdict}
+        <h3>Score Breakdown</h3>
+      </div>
+      <div class="card-body">
+        <table class="scorecard">
+          <thead>
+            <tr><th>Criterion</th><th class="num">Solution A</th><th class="num">Solution B</th></tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr class="total"><td>Weighted Total</td><td class="num">${escapeHTML(totalA)}</td><td class="num">${escapeHTML(totalB)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+
+/* =========================================================
    CREATE RESULT CARD
 ========================================================= */
 
@@ -911,6 +986,11 @@ function renderResults(data) {
       "Final Verdict",
       getAgentText(data.verdict),
       "verdict"
+    );
+
+    html += createScorecard(
+      data.verdict && data.verdict.breakdown,
+      data.verdict && data.verdict.scores
     );
   }
 
@@ -1532,6 +1612,17 @@ async function runWarRoom() {
               meta.className
             )
           );
+
+          if (eventName === "verdict") {
+
+            results.insertAdjacentHTML(
+              "beforeend",
+              createScorecard(
+                data && data.breakdown,
+                data && data.scores
+              )
+            );
+          }
         }
 
         const nextStatus =
