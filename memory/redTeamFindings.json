@@ -1,89 +1,5 @@
 [
   {
-    "finding": "The model attempts to offload municipal liability onto minors using legally unenforceable contracts, creating a administrative-heavy \"Account Management\" burden that will inevitably fail due to lack of actual staff oversight.",
-    "timestamp": "2026-09-02T18:32:46.536Z"
-  },
-  {
-    "finding": "The model imposes an unsustainable administrative and cognitive burden on employees by forcing them to act as internal contractors, which inevitably creates departmental silos and high-stakes resentment when company-wide profit fluctuations invalidate their domain-level incentives.",
-    "timestamp": "2026-09-03T00:43:04.691Z"
-  },
-  {
-    "finding": "The system imposes a forced, high-maintenance social surveillance layer that creates severe privacy liabilities and alienates the core segment of members who value autonomy over engineered community.",
-    "timestamp": "2026-09-03T01:03:46.944Z"
-  },
-  {
-    "finding": "The system weaponizes social guilt and coerces loyal members into unpaid labor, creating a toxic, surveilled environment that incentivizes users to either bully each other or abandon the platform to escape the pressure.",
-    "timestamp": "2026-09-03T01:07:28.411Z"
-  },
-  {
-    "finding": "The system transforms a spontaneous act of altruism into a rigid, status-driven loyalty program that burdens staff with excessive manual overhead and alienates the core community by commodifying their privacy and personal generosity.",
-    "timestamp": "2026-09-03T01:12:06.466Z"
-  },
-  {
-    "finding": "The system promises an \"Express\" concierge experience that fundamentally breaks under the weight of its own success, creating a service bottleneck that standard POS software and manual labor cannot sustain.",
-    "timestamp": "2026-09-03T01:12:17.673Z"
-  },
-  {
-    "finding": "The proposal ignores the reality of public hygiene and moderation, effectively forcing staff to curate a germ-laden, legally risky physical billboard that most customers will perceive as an unsanitary nuisance rather than a community asset.",
-    "timestamp": "2026-09-03T01:56:46.175Z"
-  },
-  {
-    "finding": "The proposal creates a high-stakes, data-surveillance architecture that weaponizes social status against neighbors, inevitably transforming simple noise complaints into entrenched, anonymized, and legally risky digital vendettas.",
-    "timestamp": "2026-09-03T01:59:18.689Z"
-  },
-  {
-    "finding": "The system imposes an unrealistic administrative and labor burden during the most chaotic part of the operational day, effectively ensuring the process will be abandoned or performed incorrectly by burnt-out staff.",
-    "timestamp": "2026-09-03T13:02:20.621Z"
-  },
-  {
-    "finding": "The system relies on a \"gap-filler\" safety mechanism that is physically incapable of functioning under the exact same congestion conditions that triggered the initial service disruption.",
-    "timestamp": "2026-09-03T13:42:39.183Z"
-  },
-  {
-    "finding": "The system mandates that frontline agents perform high-level content maintenance during high-pressure support operations, ensuring that the \"living\" knowledge base will be abandoned as soon as ticket volume rises.",
-    "timestamp": "2026-09-03T13:49:39.635Z"
-  },
-  {
-    "finding": "The model relies on the optimistic assumption that agents can perform high-velocity ticket resolution and high-quality technical documentation simultaneously, ensuring both functions fail when the team faces legitimate operational pressure.",
-    "timestamp": "2026-09-03T13:53:16.856Z"
-  },
-  {
-    "finding": "The solution creates a rigid \"digital-physical\" dependency that ignores aisle congestion and creates a high-friction scan-verification bottleneck that human operators will inevitably sabotage to maintain their pick-rate quotas.",
-    "timestamp": "2026-09-03T13:57:59.196Z"
-  },
-  {
-    "finding": "The \"Pull\" system converts physical congestion into a rigid digital dependency that creates massive idle-time labor costs and introduces fatal complexity that will collapse under the slightest technical or operational instability.",
-    "timestamp": "2026-09-03T14:00:19.049Z"
-  },
-  {
-    "finding": "The solution replaces an flexible workflow with a rigid, high-maintenance physical infrastructure that creates a \"starvation\" bottleneck for packers and demands a level of real-time management oversight that the operation cannot realistically sustain.",
-    "timestamp": "2026-09-03T14:04:01.469Z"
-  },
-  {
-    "finding": "The system creates a rigid physical and digital dependency on \"Golden Zone\" proximity and perfect container volume that will collapse into aisle gridlock and operational paralysis the moment you face a high-volume, irregular-sized, or technology-unstable day.",
-    "timestamp": "2026-09-03T14:07:34.755Z"
-  },
-  {
-    "finding": "The system mandates complex, multi-step administrative and social media tasks during the precise moment of day when staff are most fatigued and focused on closing, guaranteeing the process will either be abandoned or performed with damaging sloppiness.",
-    "timestamp": "2026-09-03T14:13:43.713Z"
-  },
-  {
-    "finding": "The proposal creates a rigid \"pre-heat\" labor dependency that forces staff to balance high-pressure production with strict, time-sensitive marketing obligations, ensuring the process will be abandoned the moment a single operational delay occurs.",
-    "timestamp": "2026-09-04T11:25:36.633Z"
-  },
-  {
-    "finding": "The system mandates complex, high-attention manufacturing tasks during the exact times of day when staff are either at their most exhausted (closing) or most stressed (morning rush), guaranteeing that the process will be abandoned or performed with dangerous shortcuts.",
-    "timestamp": "2026-09-04T11:32:09.616Z"
-  },
-  {
-    "finding": "The solution imposes a \"convenience tax\" on your most loyal and profitable 9-to-5 members, incentivizing them to churn rather than shift their schedules.",
-    "timestamp": "2026-09-04T11:36:17.346Z"
-  },
-  {
-    "finding": "The solution creates an administrative \"overhead tax\" that forces operators to balance production speed with complex documentation and compliance tasks, ensuring the system will be ignored or falsified the moment operational pressure rises.",
-    "timestamp": "2026-09-04T11:45:46.864Z"
-  },
-  {
     "finding": "The system relies on the assumption that frontline staff will consistently self-report machine failures that jeopardize their own operational throughput, creating a high-incentive environment for them to hide status changes and \"pencil-whip\" the documentation.",
     "timestamp": "2026-09-04T11:45:59.572Z"
   },
@@ -98,5 +14,89 @@
   {
     "finding": "The system imposes an unrealistic administrative burden on exhausted closing staff that will lead to either systemic non-compliance or the falsification of safety logs to expedite clock-out times.",
     "timestamp": "2026-09-04T11:52:21.111Z"
+  },
+  {
+    "finding": "The system relies on a high-trust, high-tech interface in a low-trust, high-interference physical environment, creating an inventory and loss-prevention nightmare that shifts the labor burden from the counter to an unsustainable cycle of manual intervention and server-side timeouts.",
+    "timestamp": "2026-09-04T12:04:53.973Z"
+  },
+  {
+    "finding": "The solution attempts to replicate a frictionless \"Apple Store\" experience in a high-friction, industrial environment where the physical weight and size of products render mobile bagging and ad-hoc security de-tagging ergonomically impossible and a high-risk security liability.",
+    "timestamp": "2026-09-04T12:05:09.879Z"
+  },
+  {
+    "finding": "The system decentralizes diagnostic authority to anonymous customers, creating an easily exploitable vector for service disruption and a high-friction administrative burden that staff will inevitably bypass during peak hours.",
+    "timestamp": "2026-09-04T12:09:07.027Z"
+  },
+  {
+    "finding": "The system imposes a high-maintenance manual labor tax on the business owner that will be abandoned during peak hours, and replaces revenue loss with a combination of margin-eroding discounts and avoidable customer churn.",
+    "timestamp": "2026-09-04T12:18:22.523Z"
+  },
+  {
+    "finding": "The solution imposes an unsustainable, high-expertise manual labor requirement that will be abandoned by frontline staff during peak periods, resulting in a degraded customer experience and fragmented, un-sellable inventory.",
+    "timestamp": "2026-09-04T12:27:39.501Z"
+  },
+  {
+    "finding": "The protocol imposes an unrealistic administrative and technical burden on frontline staff, ensuring the monitoring system will be falsified or abandoned as soon as operational pressure mounts.",
+    "timestamp": "2026-09-04T12:40:15.096Z"
+  },
+  {
+    "finding": "The system decentralizes the responsibility for inventory to a \"universal pool\" while simultaneously imposing a high-tech tracking requirement that lacks a reliable, fraud-proof way to attribute lost items to specific individuals, ensuring a rapid depletion of assets and a failure of the accountability loop.",
+    "timestamp": "2026-09-04T12:53:22.633Z"
+  },
+  {
+    "finding": "The system relies on a non-secure physical token that provides no actual deterrent to theft and creates an unmanageable logistical nightmare for staff when the \"gravity-fed\" racks inevitably jam due to student non-compliance.",
+    "timestamp": "2026-09-04T12:55:02.517Z"
+  },
+  {
+    "finding": "The system eliminates all barriers to inventory removal while simultaneously relying on a complex, high-maintenance, and easily bypassed \"reward\" loop, ensuring rapid asset depletion and operational failure.",
+    "timestamp": "2026-09-04T13:09:09.955Z"
+  },
+  {
+    "finding": "The system attempts to manage physical inventory through a digital ID-tracking loop that lacks a physical confirmation of return, ensuring that assets will be discarded or stolen with no ability for the business to audit or enforce accountability.",
+    "timestamp": "2026-09-04T13:31:21.166Z"
+  },
+  {
+    "finding": "The system attempts to enforce digital accountability in a high-volume, low-security physical environment where the impossibility of verifying individual returns will lead to systemic inventory loss and a collapse of user trust through inaccurate automated charges.",
+    "timestamp": "2026-09-04T13:46:10.912Z"
+  },
+  {
+    "finding": "The solution imposes a high-complexity technical administrative burden on low-skill staff, ensuring the system will be permanently bypassed or disabled the moment it experiences a mechanical or calibration fault.",
+    "timestamp": "2026-09-04T18:13:48.167Z"
+  },
+  {
+    "finding": "The model replaces a managed labor bottleneck with an unmonitored, high-risk self-service environment that invites food tampering, inventory theft, and rapid product degradation.",
+    "timestamp": "2026-09-04T19:08:45.359Z"
+  },
+  {
+    "finding": "The system assumes universal customer compliance and high-skill staff multitasking, creating a fragile operational loop that will collapse into social friction and total service paralysis the moment a customer refuses to follow the digital-only protocol.",
+    "timestamp": "2026-09-04T19:15:18.249Z"
+  },
+  {
+    "finding": "The system relies on a high-bandwidth, error-prone verbal communication loop that will be rendered inaudible and secondary the moment the POS operator becomes overwhelmed by transaction volume.",
+    "timestamp": "2026-09-04T19:22:58.848Z"
+  },
+  {
+    "finding": "The system assumes a frictionless, high-compliance environment where customers follow floor markings and technology never fails, ignoring the inevitable social friction and operational paralysis that occur when digital syncs lag or demand surges.",
+    "timestamp": "2026-09-04T19:30:17.292Z"
+  },
+  {
+    "finding": "The system relies on inherently imprecise network-based occupancy tracking that is easily gamed by students while simultaneously creating a high-liability, labor-intensive property management mandate for library staff.",
+    "timestamp": "2026-09-04T20:00:16.319Z"
+  },
+  {
+    "finding": "The solution relies on a \"Flex\" staffing model that is guaranteed to evaporate during volume surges, turning the PIT desk into an unstaffed bottleneck that creates dangerous, high-liability gaps in patient care.",
+    "timestamp": "2026-09-04T20:05:42.583Z"
+  },
+  {
+    "finding": "The solution attempts to engineer social spontaneity through fragile, temporary funding and invasive digital monitoring, ensuring the project collapses into expensive urban blight once the pilot program’s budget expires.",
+    "timestamp": "2026-09-04T20:07:51.714Z"
+  },
+  {
+    "finding": "The system replaces automated technical gates with a resource-intensive pairing requirement that will inevitably become a labor bottleneck, ultimately leading teams to bypass the planning sessions entirely under deadline pressure.",
+    "timestamp": "2026-09-04T20:09:32.177Z"
+  },
+  {
+    "finding": "The solution creates an administrative \"paperwork tax\" that will be ignored or actively subverted the moment production demands conflict with energy-saving protocols.",
+    "timestamp": "2026-09-04T20:23:01.256Z"
   }
 ]

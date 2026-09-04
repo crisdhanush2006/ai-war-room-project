@@ -276,25 +276,55 @@ textarea::placeholder {
   margin-top: 14px;
 }
 
-#loading::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: #5b8cff;
+/* ================= PIPELINE TRACKER ================= */
+
+.pipeline-tracker {
+  display: none;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.pipeline-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1f2126;
+  border: 1px solid #33363c;
+  color: #6b7076;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 20px;
+  transition: all .25s ease;
+}
+
+.pipeline-step .dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  margin-right: 8px;
+  background: #444a52;
+  flex-shrink: 0;
+}
+
+.pipeline-step.active {
+  border-color: #5b8cff;
+  color: #9db3ff;
+}
+
+.pipeline-step.active .dot {
+  background: #5b8cff;
   animation: pulse 1s infinite ease-in-out;
 }
 
-@keyframes pulse {
-  0%,100% {
-    opacity: .3;
-  }
+.pipeline-step.done {
+  border-color: #4caf7d;
+  color: #4caf7d;
+}
 
-  50% {
-    opacity: 1;
-  }
+.pipeline-step.done .dot {
+  background: #4caf7d;
+  animation: none;
 }
 
 /* ================= RESULT CARDS ================= */
@@ -643,6 +673,8 @@ textarea::placeholder {
     Running agents...
   </div>
 
+  <div id="pipelineTracker" class="pipeline-tracker"></div>
+
     <!-- ================= RESULTS ================= -->
 
   <div id="memoryBadge"></div>
@@ -831,7 +863,17 @@ function getAgentText(agent) {
 function createScorecard(breakdown, scores) {
 
   if (!breakdown || !breakdown.solutionA || !breakdown.solutionB) {
-    return "";
+    return `
+      <div class="card verdict">
+        <div class="result-header">
+          ${ICONS.verdict}
+          <h3>Score Breakdown</h3>
+        </div>
+        <div class="card-body">
+          <p>Scores could not be generated for this run (the judge's response couldn't be parsed). The verdict above is still valid — just without a numeric breakdown.</p>
+        </div>
+      </div>
+    `;
   }
 
   const criteria = ["feasibility", "practicality", "cost", "reliability", "evidence", "scalability", "novelty"];
@@ -1427,26 +1469,83 @@ function updateCurrentHistoryChatLog() {
 ========================================================= */
 
 const EVENT_CARD_MAP = {
-  analysis:          { icon: ICONS.analysis,    title: "Problem Analysis",         className: "analysis-card" },
-  solutionA:         { icon: ICONS.solution,    title: "Solution A",               className: "solution-card" },
-  solutionB:         { icon: ICONS.solution,    title: "Solution B",               className: "solution-card" },
-  costReview:        { icon: ICONS.cost,        title: "Cost Critique",            className: "cost-card" },
-  feasibilityReview: { icon: ICONS.feasibility, title: "Feasibility Critique",     className: "feasibility-card" },
-  verdict:           { icon: ICONS.verdict,     title: "Final Verdict",            className: "verdict" },
-  refined:           { icon: ICONS.refined,     title: "Refined Winning Solution", className: "refined-card" },
-  redTeamReview:     { icon: ICONS.redteam,     title: "Red Team Review",          className: "redteam-card" }
+  analysis:            { icon: ICONS.analysis,    title: "Problem Analysis",         className: "analysis-card" },
+  solutionA:           { icon: ICONS.solution,    title: "Solution A",               className: "solution-card" },
+  solutionB:           { icon: ICONS.solution,    title: "Solution B",               className: "solution-card" },
+  costReviewA:         { icon: ICONS.cost,        title: "Cost Critique — Solution A",         className: "cost-card" },
+  feasibilityReviewA:  { icon: ICONS.feasibility, title: "Feasibility Critique — Solution A",  className: "feasibility-card" },
+  costReviewB:         { icon: ICONS.cost,        title: "Cost Critique — Solution B",         className: "cost-card" },
+  feasibilityReviewB:  { icon: ICONS.feasibility, title: "Feasibility Critique — Solution B",  className: "feasibility-card" },
+  rebuttalA:           { icon: ICONS.verdict,     title: "Rebuttal — Solution A",     className: "verdict" },
+  rebuttalB:           { icon: ICONS.verdict,     title: "Rebuttal — Solution B",     className: "verdict" },
+  crossExamA:          { icon: ICONS.verdict,     title: "Cross-Exam — Solution A",   className: "verdict" },
+  crossExamB:          { icon: ICONS.verdict,     title: "Cross-Exam — Solution B",   className: "verdict" },
+  verdict:             { icon: ICONS.verdict,     title: "Final Verdict",            className: "verdict" },
+  refined:             { icon: ICONS.refined,     title: "Refined Winning Solution", className: "refined-card" },
+  redTeamReview:       { icon: ICONS.redteam,     title: "Red Team Review",          className: "redteam-card" }
 };
 
 const STATUS_AFTER = {
-  analysis:          "Generating Solution A...",
-  solutionA:         mode => mode === "quick" ? "Refining the solution..." : "Generating Solution B...",
-  solutionB:         "Running cost critique...",
-  costReview:        "Running feasibility critique...",
-  feasibilityReview: "Judge weighing both solutions...",
-  verdict:           "Refining the winning solution...",
-  refined:           "Red Team attacking the solution...",
-  redTeamReview:     "Finalizing report..."
+  analysis:            "Generating Solution A...",
+  solutionA:           mode => mode === "quick" ? "Refining the solution..." : "Generating Solution B...",
+  solutionB:           "Running cost critique on Solution A...",
+  costReviewA:         "Running feasibility critique on Solution A...",
+  feasibilityReviewA:  "Running cost critique on Solution B...",
+  costReviewB:         "Running feasibility critique on Solution B...",
+  feasibilityReviewB:  "Solution A preparing its rebuttal...",
+  rebuttalA:           "Solution B preparing its rebuttal...",
+  rebuttalB:           "Solution A cross-examining Solution B's rebuttal...",
+  crossExamA:          "Solution B cross-examining Solution A's rebuttal...",
+  crossExamB:          "Judge weighing solutions, critiques, rebuttals and cross-examination...",
+  verdict:             "Refining the winning solution...",
+  refined:             "Red Team attacking the solution...",
+  redTeamReview:       "Finalizing report..."
 };
+
+const PIPELINE_STEPS = [
+  { key: "analysis",           label: "Analysis" },
+  { key: "solutionA",          label: "Solution A" },
+  { key: "solutionB",          label: "Solution B" },
+  { key: "costReviewA",        label: "Cost A" },
+  { key: "feasibilityReviewA", label: "Feasibility A" },
+  { key: "costReviewB",        label: "Cost B" },
+  { key: "feasibilityReviewB", label: "Feasibility B" },
+  { key: "rebuttalA",          label: "Rebuttal A" },
+  { key: "rebuttalB",          label: "Rebuttal B" },
+  { key: "crossExamA",         label: "Cross-Exam A" },
+  { key: "crossExamB",         label: "Cross-Exam B" },
+  { key: "verdict",            label: "Verdict" },
+  { key: "refined",            label: "Refined" },
+  { key: "redTeamReview",      label: "Red Team" }
+];
+
+function renderPipelineTracker(mode) {
+  const tracker = document.getElementById("pipelineTracker");
+  const steps = mode === "quick"
+    ? PIPELINE_STEPS.filter(s => ["analysis", "solutionA", "refined"].includes(s.key))
+    : PIPELINE_STEPS;
+
+  tracker.innerHTML = steps.map(s =>
+    `<div class="pipeline-step" data-key="${s.key}"><span class="dot"></span>${s.label}</div>`
+  ).join("");
+
+  tracker.style.display = "flex";
+}
+
+function markPipelineStep(key, state) {
+  const tracker = document.getElementById("pipelineTracker");
+  const el = tracker.querySelector(`[data-key="${key}"]`);
+  if (!el) return;
+  el.classList.remove("active", "done");
+  if (state) el.classList.add(state);
+}
+
+function markAllPipelineDone() {
+  document.querySelectorAll(".pipeline-step").forEach(el => {
+    el.classList.remove("active");
+    el.classList.add("done");
+  });
+}
 
 
 /* =========================================================
@@ -1524,6 +1623,8 @@ async function runWarRoom() {
   results.innerHTML = "";
   loading.style.display = "block";
   loading.textContent = "Analyzing the problem...";
+  renderPipelineTracker(currentMode);
+  markPipelineStep("analysis", "active");
   currentHistoryId = null;
 
   let finalResult = null;
@@ -1599,6 +1700,8 @@ async function runWarRoom() {
           continue;
         }
 
+        markPipelineStep(eventName, "done");
+
         const meta = EVENT_CARD_MAP[eventName];
 
         if (meta) {
@@ -1625,10 +1728,14 @@ async function runWarRoom() {
           }
         }
 
-        const nextStatus =
-          STATUS_AFTER[eventName];
+          const nextStatus = STATUS_AFTER[eventName];
 
         if (nextStatus) {
+
+          const stepIndex = PIPELINE_STEPS.findIndex(s => s.key === eventName);
+          if (stepIndex !== -1 && PIPELINE_STEPS[stepIndex + 1]) {
+            markPipelineStep(PIPELINE_STEPS[stepIndex + 1].key, "active");
+          }
 
           loading.textContent =
             typeof nextStatus === "function"
@@ -1678,6 +1785,7 @@ async function runWarRoom() {
 
     runButton.disabled = false;
     loading.style.display = "none";
+    markAllPipelineDone();
   }
 }
 

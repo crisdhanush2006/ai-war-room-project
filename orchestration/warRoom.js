@@ -6,6 +6,10 @@ const { critiqueCost } = require('../agents/costCritic');
 const { critiqueFeasibility } = require('../agents/feasibilityCritic');
 const { redTeamSolution } = require('../agents/redTeam');
 const { judgeSolutions } = require('../agents/judge');
+const { generateRebuttalA } = require('../agents/rebuttalA');
+const { generateRebuttalB } = require('../agents/rebuttalB');
+const { generateCrossExamA } = require('../agents/crossExamA');
+const { generateCrossExamB } = require('../agents/crossExamB');
 
 async function runWarRoom(problem, mode = 'full', onEvent = () => {}) {
   const analysis = await analyzeProblem(problem);
@@ -39,12 +43,44 @@ async function runWarRoom(problem, mode = 'full', onEvent = () => {}) {
   const feasibilityReviewB = await critiqueFeasibility(solutionB.analysis);
   onEvent('feasibilityReviewB', feasibilityReviewB);
 
-  // Pass all four critiques into the judge
+  // Rebuttal round — each side defends itself against the other + critiques
+  const rebuttalA = await generateRebuttalA(
+    solutionA.analysis, solutionB.analysis,
+    costReviewA.analysis, feasibilityReviewA.analysis,
+    costReviewB.analysis, feasibilityReviewB.analysis
+  );
+  onEvent('rebuttalA', rebuttalA);
+
+  const rebuttalB = await generateRebuttalB(
+    solutionA.analysis, solutionB.analysis,
+    costReviewA.analysis, feasibilityReviewA.analysis,
+    costReviewB.analysis, feasibilityReviewB.analysis
+  );
+  onEvent('rebuttalB', rebuttalB);
+
+  // Cross-examination round — each side directly responds to the other's rebuttal
+  const crossExamA = await generateCrossExamA(
+    solutionA.analysis, solutionB.analysis,
+    rebuttalA.analysis, rebuttalB.analysis
+  );
+  onEvent('crossExamA', crossExamA);
+
+  const crossExamB = await generateCrossExamB(
+    solutionA.analysis, solutionB.analysis,
+    rebuttalA.analysis, rebuttalB.analysis
+  );
+  onEvent('crossExamB', crossExamB);
+
+  // Pass all critiques + rebuttals + cross-exam into the judge
   const verdict = await judgeSolutions(solutionA.analysis, solutionB.analysis, {
     costReviewA: costReviewA.analysis,
     feasibilityReviewA: feasibilityReviewA.analysis,
     costReviewB: costReviewB.analysis,
-    feasibilityReviewB: feasibilityReviewB.analysis
+    feasibilityReviewB: feasibilityReviewB.analysis,
+    rebuttalA: rebuttalA.analysis,
+    rebuttalB: rebuttalB.analysis,
+    crossExamA: crossExamA.analysis,
+    crossExamB: crossExamB.analysis
   });
   onEvent('verdict', verdict);
 
@@ -65,6 +101,8 @@ async function runWarRoom(problem, mode = 'full', onEvent = () => {}) {
   const result = {
     mode, problem, analysis, solutionA, solutionB,
     costReviewA, feasibilityReviewA, costReviewB, feasibilityReviewB,
+    rebuttalA, rebuttalB,
+    crossExamA, crossExamB,
     verdict, refined, redTeamReview,
     totalPastFindingsUsed
   };

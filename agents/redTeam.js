@@ -15,8 +15,23 @@ function loadMemory() {
   }
 }
 
+function isSimilar(a, b) {
+  const normalize = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/);
+  const wordsA = new Set(normalize(a));
+  const wordsB = new Set(normalize(b));
+  const overlap = [...wordsA].filter(w => wordsB.has(w)).length;
+  const smaller = Math.min(wordsA.size, wordsB.size);
+  return smaller > 0 && overlap / smaller > 0.6; // 60%+ word overlap = too similar
+}
+
 function saveFinding(finding) {
   const memory = loadMemory();
+
+  const isDuplicate = memory.some(entry => isSimilar(entry.finding, finding));
+  if (isDuplicate) {
+    return; // skip saving near-duplicate lessons
+  }
+
   memory.push({
     finding: finding,
     timestamp: new Date().toISOString()
@@ -71,7 +86,7 @@ KEY_FLAW: <your one sentence summary here>
     saveFinding(match[1].trim());
   }
 
-   const findingsCount = pastFindings === 'No past findings yet.' ? 0 : pastFindings.split('\n').length;
+  const findingsCount = pastFindings === 'No past findings yet.' ? 0 : pastFindings.split('\n').length;
 
   return makeAgentResponse({
     agent: 'red_team',
