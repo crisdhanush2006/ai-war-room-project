@@ -30,7 +30,8 @@ app.post('/api/run', async (req, res) => {
 
 // NEW endpoint - streams each agent result live using Server-Sent Events
 app.post('/api/run-stream', async (req, res) => {
-  const { problem, mode } = req.body;
+  console.log('STREAM REQUEST RECEIVED:', req.body);
+  const { problem, mode, debateStyle } = req.body;
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -45,7 +46,7 @@ app.post('/api/run-stream', async (req, res) => {
   try {
     await runWarRoom(problem, mode || 'full', (name, data) => {
       sendEvent(name, data);
-    });
+    }, debateStyle || 'balanced');
   } catch (error) {
     console.error(error);
 

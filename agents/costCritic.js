@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { callGPT } = require('../shared/callGPT');
+const { callGPTStream } = require('../shared/callGPT');
 const { makeAgentResponse } = require('../shared/agentSchema');
 
 const MEMORY_PATH = path.join(__dirname, '..', 'memory', 'redTeamFindings.json');
@@ -20,7 +20,7 @@ function loadPastFindings() {
   }
 }
 
-async function critiqueCost(solutionText) {
+async function critiqueCost(solutionText, onToken = () => {}) {
   const systemMessage = 'You are a Cost Critic. You analyze solutions ONLY from a cost/budget perspective, and you stay alert to cost traps this system has been fooled by before.';
 
   const pastFindings = loadPastFindings();
@@ -38,9 +38,9 @@ Solution:
 ${solutionText}
 `;
 
-  const result = await callGPT(prompt, systemMessage);
+  const result = await callGPTStream(prompt, systemMessage, onToken);
 
-    const findingsCount = pastFindings === 'No past findings yet.' ? 0 : pastFindings.split('\n').length;
+  const findingsCount = pastFindings === 'No past findings yet.' ? 0 : pastFindings.split('\n').length;
 
   return makeAgentResponse({
     agent: 'cost_critic',

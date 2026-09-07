@@ -1,2 +1,7 @@
 node_modules
 .env
+checkpoint-before-verifier.txt
+verifier-proof.txt
+debug-cleaned.txt
+debug-raw.txt
+run.log

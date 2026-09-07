@@ -1,7 +1,7 @@
-const { callGPT } = require('../shared/callGPT');
+const { callGPTStream } = require('../shared/callGPT');
 const { makeAgentResponse } = require('../shared/agentSchema');
 
-async function generateSolutionA(problemBreakdown) {
+async function generateSolutionA(problemBreakdown, onToken = () => {}) {
   const systemMessage = 'You are Generator A. You propose one clear, practical solution to a problem.';
 
   const prompt = `
@@ -12,7 +12,7 @@ Problem breakdown:
 ${problemBreakdown}
 `;
 
-  const result = await callGPT(prompt, systemMessage);
+  const result = await callGPTStream(prompt, systemMessage, onToken);
 
   return makeAgentResponse({
     agent: 'generator_a',

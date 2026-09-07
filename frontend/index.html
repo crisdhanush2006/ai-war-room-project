@@ -267,6 +267,7 @@ textarea::placeholder {
   border-radius: 6px;
   margin-top: 14px;
 }
+
 /* ================= LOADING ================= */
 
 #loading {
@@ -327,6 +328,15 @@ textarea::placeholder {
   animation: none;
 }
 
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .35;
+  }
+}
+
 /* ================= RESULT CARDS ================= */
 
 .card {
@@ -382,8 +392,6 @@ textarea::placeholder {
   overflow-wrap: anywhere;
 }
 
-/* Individual SVG colors */
-
 .analysis-card .result-icon {
   color: #5b8cff;
 }
@@ -419,6 +427,148 @@ textarea::placeholder {
   color: #4caf7d;
 }
 
+/* ================= DEBATE MODE ================= */
+
+.style-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.style-btn {
+  flex: 1;
+  min-width: 100px;
+  background: #1f2126;
+  border: 1px solid #33363c;
+  color: #9a9a9a;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.style-btn:hover {
+  border-color: #8b5cf6;
+  color: #d9b3ff;
+}
+
+.style-btn.active {
+  border-color: #c084fc;
+  background: #2a1e3d;
+  color: #d9b3ff;
+}
+
+/* ================= CONFIDENCE METER ================= */
+
+#confidenceMeter {
+  display: none;
+  margin-top: 16px;
+}
+
+.meter-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.meter-labels .a-label {
+  color: #9db3ff;
+}
+
+.meter-labels .b-label {
+  color: #ff9d9d;
+}
+
+.meter-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1f2126;
+  border: 1px solid #33363c;
+}
+
+.meter-fill-a {
+  background: #5b8cff;
+  transition: width .5s ease;
+}
+
+.meter-fill-b {
+  background: #ff6b6b;
+  transition: width .5s ease;
+}
+
+/* ================= ROOM BUBBLES ================= */
+
+.room-msg {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 14px;
+  animation: cardIn .3s ease both;
+}
+
+.room-msg .room-msg-label {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  opacity: 0.85;
+}
+
+.room-msg.side-a {
+  margin-right: auto;
+  background: #1e2a4a;
+  border: 1px solid #3d5aa8;
+  color: #cfd8ff;
+}
+
+.room-msg.side-a .room-msg-label {
+  color: #9db3ff;
+}
+
+.room-msg.side-b {
+  margin-left: auto;
+  background: #3a1e1e;
+  border: 1px solid #a83d3d;
+  color: #ffd8c8;
+}
+
+.room-msg.side-b .room-msg-label {
+  color: #ff9d9d;
+}
+
+.room-msg.side-judge {
+  max-width: 95%;
+  margin: 14px auto;
+  background: #16241d;
+  border: 1px solid #4caf7d;
+  color: #bfe9d3;
+}
+
+.room-msg.side-judge .room-msg-label {
+  color: #4caf7d;
+}
+
+.room-msg.side-system {
+  max-width: 95%;
+  margin: 14px auto;
+  background: #1f2126;
+  border: 1px solid #33363c;
+  color: #cfcfcf;
+}
+
+.room-msg.side-system .room-msg-label {
+  color: #5b8cff;
+}
+
 /* ================= SCORECARD ================= */
 
 .scorecard {
@@ -450,6 +600,7 @@ textarea::placeholder {
   color: white;
   border-top: 2px solid #33363c;
 }
+
 /* ================= FOLLOW UP ================= */
 
 #followupSection {
@@ -549,6 +700,14 @@ textarea::placeholder {
     flex-direction: column;
   }
 
+  .style-row {
+    flex-direction: column;
+  }
+
+  .style-btn {
+    width: 100%;
+  }
+
   .followup-row {
     flex-direction: column;
   }
@@ -573,7 +732,7 @@ textarea::placeholder {
 
 <div class="wrap">
 
-  <!-- ================= HEADER ================= -->
+  <!-- HEADER -->
 
   <div class="header-row">
 
@@ -594,7 +753,7 @@ textarea::placeholder {
 
   </div>
 
-  <!-- ================= HISTORY ================= -->
+  <!-- HISTORY -->
 
   <div id="historyPanel">
 
@@ -612,13 +771,51 @@ textarea::placeholder {
 
   </div>
 
-  <!-- ================= PROBLEM ================= -->
+  <!-- PROBLEM -->
 
   <textarea
     id="problemInput"
     placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"></textarea>
 
-  <!-- ================= MODE ================= -->
+  <!-- DEBATE STYLE -->
+
+  <div class="style-row" id="styleRow">
+
+    <button
+      type="button"
+      class="style-btn active"
+      data-style="balanced"
+      onclick="setDebateStyle('balanced')">
+      Balanced
+    </button>
+
+    <button
+      type="button"
+      class="style-btn"
+      data-style="aggressive"
+      onclick="setDebateStyle('aggressive')">
+      Aggressive
+    </button>
+
+    <button
+      type="button"
+      class="style-btn"
+      data-style="scientific"
+      onclick="setDebateStyle('scientific')">
+      Scientific
+    </button>
+
+    <button
+      type="button"
+      class="style-btn"
+      data-style="legal"
+      onclick="setDebateStyle('legal')">
+      Legal
+    </button>
+
+  </div>
+
+  <!-- MODE -->
 
   <div class="mode-row">
 
@@ -650,23 +847,19 @@ textarea::placeholder {
 
   </div>
 
-  <!-- ================= ACTIONS ================= -->
+  <!-- ACTIONS -->
 
   <button
     class="run"
     id="runBtn"
     onclick="runWarRoom()">
-
     Run War Room
-
   </button>
 
   <button
     id="downloadBtn"
     onclick="downloadPDF()">
-
     Download PDF
-
   </button>
 
   <div id="loading">
@@ -675,13 +868,42 @@ textarea::placeholder {
 
   <div id="pipelineTracker" class="pipeline-tracker"></div>
 
-    <!-- ================= RESULTS ================= -->
+  <!-- CONFIDENCE METER -->
+
+  <div
+    id="confidenceMeter"
+    aria-label="Live confidence meter">
+
+    <div class="meter-labels">
+      <span class="a-label">AI A</span>
+      <span class="b-label">AI B</span>
+    </div>
+
+    <div class="meter-bar">
+
+      <div
+        class="meter-fill-a"
+        id="meterFillA"
+        style="width:50%">
+      </div>
+
+      <div
+        class="meter-fill-b"
+        id="meterFillB"
+        style="width:50%">
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- RESULTS -->
 
   <div id="memoryBadge"></div>
 
   <div id="results"></div>
 
-  <!-- ================= FOLLOW UP ================= -->
+  <!-- FOLLOW UP -->
 
   <div id="followupSection">
 
@@ -701,9 +923,7 @@ textarea::placeholder {
       <button
         id="askBtn"
         onclick="askFollowUp()">
-
         Ask
-
       </button>
 
     </div>
@@ -712,7 +932,6 @@ textarea::placeholder {
 
 </div>
 
-
 <script>
 
 /* =========================================================
@@ -720,12 +939,122 @@ textarea::placeholder {
 ========================================================= */
 
 let currentMode = "full";
+let currentDebateStyle = "balanced";
+
+function setDebateStyle(style) {
+
+  const allowedStyles = [
+    "balanced",
+    "aggressive",
+    "scientific",
+    "legal"
+  ];
+
+  currentDebateStyle =
+    allowedStyles.includes(style)
+      ? style
+      : "balanced";
+
+  document
+    .querySelectorAll(".style-btn")
+    .forEach(btn => {
+
+      btn.classList.toggle(
+        "active",
+        btn.dataset.style === currentDebateStyle
+      );
+
+    });
+}
+
+let confidenceA = 50;
+let confidenceB = 50;
+
+/* =========================================================
+   CONFIDENCE NUDGE
+========================================================= */
+
+const CONFIDENCE_NUDGE = {
+
+  solutionA: 0,
+  solutionB: 0,
+
+  costReviewA: -4,
+  feasibilityReviewA: -4,
+
+  costReviewB: 4,
+  feasibilityReviewB: 4,
+
+  rebuttalA: 5,
+  rebuttalB: -5,
+
+  crossExamA: 4,
+  crossExamB: -4,
+
+  issueResponseA: 3,
+  issueResponseB: -3
+};
+
+function updateConfidenceMeter() {
+
+  const fillA =
+    document.getElementById("meterFillA");
+
+  const fillB =
+    document.getElementById("meterFillB");
+
+  if (!fillA || !fillB) {
+    return;
+  }
+
+  fillA.style.width =
+    confidenceA + "%";
+
+  fillB.style.width =
+    confidenceB + "%";
+}
+
+function nudgeConfidence(eventName) {
+
+  const nudge =
+    CONFIDENCE_NUDGE[eventName];
+
+  if (nudge === undefined) {
+    return;
+  }
+
+  confidenceA =
+    Math.min(
+      85,
+      Math.max(
+        15,
+        confidenceA + nudge
+      )
+    );
+
+  confidenceB =
+    100 - confidenceA;
+
+  updateConfidenceMeter();
+}
+
+function resetConfidenceMeter() {
+
+  confidenceA = 50;
+  confidenceB = 50;
+
+  updateConfidenceMeter();
+}
+
 let lastResult = null;
 let lastProblem = "";
 let currentHistoryId = null;
 
-const HISTORY_KEY = "aiWarRoomHistory";
-const MAX_HISTORY_ITEMS = 30;
+const HISTORY_KEY =
+  "aiWarRoomHistory";
+
+const MAX_HISTORY_ITEMS =
+  30;
 
 
 /* =========================================================
@@ -807,11 +1136,17 @@ function setMode(mode) {
 
   document
     .getElementById("quickBtn")
-    .classList.toggle("active", mode === "quick");
+    .classList.toggle(
+      "active",
+      mode === "quick"
+    );
 
   document
     .getElementById("fullBtn")
-    .classList.toggle("active", mode === "full");
+    .classList.toggle(
+      "active",
+      mode === "full"
+    );
 }
 
 
@@ -821,7 +1156,10 @@ function setMode(mode) {
 
 function escapeHTML(value) {
 
-  if (value === null || value === undefined) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
     return "";
   }
 
@@ -852,59 +1190,154 @@ function getAgentText(agent) {
     return agent.analysis;
   }
 
-  return JSON.stringify(agent, null, 2);
+  return JSON.stringify(
+    agent,
+    null,
+    2
+  );
 }
 
 
 /* =========================================================
-   CREATE SCORECARD (Judge breakdown table)
+   SCORECARD
 ========================================================= */
 
-function createScorecard(breakdown, scores) {
+function createScorecard(
+  breakdown,
+  scores
+) {
 
-  if (!breakdown || !breakdown.solutionA || !breakdown.solutionB) {
+  const isTie =
+    scores &&
+    scores.A !== null &&
+    scores.B !== null &&
+    Math.abs(
+      scores.A - scores.B
+    ) <= 3;
+
+  if (
+    !breakdown ||
+    !breakdown.solutionA ||
+    !breakdown.solutionB
+  ) {
+
     return `
       <div class="card verdict">
+
         <div class="result-header">
           ${ICONS.verdict}
           <h3>Score Breakdown</h3>
         </div>
+
         <div class="card-body">
-          <p>Scores could not be generated for this run (the judge's response couldn't be parsed). The verdict above is still valid — just without a numeric breakdown.</p>
+          <p>
+            Scores could not be generated for this run
+            because the judge's response could not be parsed.
+            The verdict above is still valid — just without
+            a numeric breakdown.
+          </p>
         </div>
+
       </div>
     `;
   }
 
-  const criteria = ["feasibility", "practicality", "cost", "reliability", "evidence", "scalability", "novelty"];
+  const criteria = [
+    "feasibility",
+    "practicality",
+    "cost",
+    "reliability",
+    "evidence",
+    "scalability",
+    "novelty"
+  ];
 
-  const rows = criteria.map(key => {
-    const a = breakdown.solutionA[key] ?? "-";
-    const b = breakdown.solutionB[key] ?? "-";
-    const label = key.charAt(0).toUpperCase() + key.slice(1);
-    return `<tr><td>${escapeHTML(label)}</td><td class="num">${escapeHTML(a)}</td><td class="num">${escapeHTML(b)}</td></tr>`;
-  }).join("");
+  const rows =
+    criteria
+      .map(key => {
 
-  const totalA = scores && scores.A !== null && scores.A !== undefined ? scores.A : "-";
-  const totalB = scores && scores.B !== null && scores.B !== undefined ? scores.B : "-";
+        const a =
+          breakdown.solutionA[key] ?? "-";
+
+        const b =
+          breakdown.solutionB[key] ?? "-";
+
+        const label =
+          key.charAt(0).toUpperCase() +
+          key.slice(1);
+
+        return `
+          <tr>
+            <td>${escapeHTML(label)}</td>
+            <td class="num">${escapeHTML(a)}</td>
+            <td class="num">${escapeHTML(b)}</td>
+          </tr>
+        `;
+
+      })
+      .join("");
+
+  const totalA =
+    scores &&
+    scores.A !== null &&
+    scores.A !== undefined
+      ? scores.A
+      : "-";
+
+  const totalB =
+    scores &&
+    scores.B !== null &&
+    scores.B !== undefined
+      ? scores.B
+      : "-";
 
   return `
     <div class="card verdict">
+
       <div class="result-header">
         ${ICONS.verdict}
         <h3>Score Breakdown</h3>
       </div>
+
       <div class="card-body">
+
         <table class="scorecard">
+
           <thead>
-            <tr><th>Criterion</th><th class="num">Solution A</th><th class="num">Solution B</th></tr>
+            <tr>
+              <th>Criterion</th>
+              <th class="num">Solution A</th>
+              <th class="num">Solution B</th>
+            </tr>
           </thead>
+
           <tbody>
+
             ${rows}
-            <tr class="total"><td>Weighted Total</td><td class="num">${escapeHTML(totalA)}</td><td class="num">${escapeHTML(totalB)}</td></tr>
+
+            <tr class="total">
+              <td>Weighted Total</td>
+              <td class="num">${escapeHTML(totalA)}</td>
+              <td class="num">${escapeHTML(totalB)}</td>
+            </tr>
+
           </tbody>
+
         </table>
+
+        ${
+          isTie
+            ? `
+              <p style="margin-top:12px;color:#9db3ff;font-size:12px;">
+                ⚖️ Scores are close enough that the Judge
+                treated this as too close to call a decisive winner.
+              </p>
+            `
+            : ""
+        }
+
       </div>
+
     </div>
   `;
 }
@@ -914,7 +1347,12 @@ function createScorecard(breakdown, scores) {
    CREATE RESULT CARD
 ========================================================= */
 
-function createCard(icon, title, content, className = "") {
+function createCard(
+  icon,
+  title,
+  content,
+  className = ""
+) {
 
   return `
     <div class="card ${className}">
@@ -939,7 +1377,7 @@ function createCard(icon, title, content, className = "") {
 
 
 /* =========================================================
-   RENDER RESULTS (used for history playback)
+   RENDER RESULTS
 ========================================================= */
 
 function renderResults(data) {
@@ -949,19 +1387,20 @@ function renderResults(data) {
 
   if (!data) {
 
-    results.innerHTML = createCard(
-      ICONS.analysis,
-      "Error",
-      "No data was returned from the server.",
-      "analysis-card"
-    );
+    results.innerHTML =
+      createCard(
+        ICONS.analysis,
+        "Error",
+        "No data was returned from the server.",
+        "analysis-card"
+      );
 
     return;
   }
 
   let html = "";
 
-  /* Problem Analysis */
+  /* Analysis */
 
   html += createCard(
     ICONS.analysis,
@@ -969,7 +1408,6 @@ function renderResults(data) {
     getAgentText(data.analysis),
     "analysis-card"
   );
-
 
   /* Solution A */
 
@@ -980,18 +1418,7 @@ function renderResults(data) {
     "solution-card"
   );
 
-
-  /* Refined Solution */
-
-  html += createCard(
-    ICONS.refined,
-    "Refined Winning Solution",
-    getAgentText(data.refined),
-    "refined-card"
-  );
-
-
-  /* Full Mode */
+  /* Full */
 
   if (data.mode === "full") {
 
@@ -1004,15 +1431,29 @@ function renderResults(data) {
 
     html += createCard(
       ICONS.cost,
-      "Cost Critique",
-      getAgentText(data.costReview),
+      "Cost Critique — A",
+      getAgentText(data.costReviewA),
       "cost-card"
     );
 
     html += createCard(
       ICONS.feasibility,
-      "Feasibility Critique",
-      getAgentText(data.feasibilityReview),
+      "Feasibility Critique — A",
+      getAgentText(data.feasibilityReviewA),
+      "feasibility-card"
+    );
+
+    html += createCard(
+      ICONS.cost,
+      "Cost Critique — B",
+      getAgentText(data.costReviewB),
+      "cost-card"
+    );
+
+    html += createCard(
+      ICONS.feasibility,
+      "Feasibility Critique — B",
+      getAgentText(data.feasibilityReviewB),
       "feasibility-card"
     );
 
@@ -1031,28 +1472,75 @@ function renderResults(data) {
     );
 
     html += createScorecard(
-      data.verdict && data.verdict.breakdown,
-      data.verdict && data.verdict.scores
+      data.verdict &&
+      data.verdict.breakdown,
+
+      data.verdict &&
+      data.verdict.scores
+    );
+
+  } else {
+
+    html += createCard(
+      ICONS.refined,
+      "Refined Winning Solution",
+      getAgentText(data.refined),
+      "refined-card"
     );
   }
 
+  if (
+    data.mode === "full" &&
+    data.refined
+  ) {
+
+    html += createCard(
+      ICONS.refined,
+      "Refined Winning Solution",
+      getAgentText(data.refined),
+      "refined-card"
+    );
+  }
 
   results.innerHTML = html;
 }
+
+
+/* =========================================================
+   MEMORY BADGE
+========================================================= */
+
 function updateMemoryBadge(data) {
-  const badge = document.getElementById("memoryBadge");
-  const count = data && data.totalPastFindingsUsed;
+
+  const badge =
+    document.getElementById(
+      "memoryBadge"
+    );
+
+  const count =
+    data &&
+    data.totalPastFindingsUsed;
+
   if (count && count > 0) {
-    badge.style.display = "block";
-    badge.textContent = "🧠 This analysis referenced " + count + " lesson(s) learned from past runs.";
+
+    badge.style.display =
+      "block";
+
+    badge.textContent =
+      "🧠 This analysis referenced " +
+      count +
+      " lesson(s) learned from past runs.";
+
   } else {
-    badge.style.display = "none";
+
+    badge.style.display =
+      "none";
   }
 }
 
 
 /* =========================================================
-   HISTORY - LOAD
+   HISTORY
 ========================================================= */
 
 function loadHistoryFromStorage() {
@@ -1060,9 +1548,13 @@ function loadHistoryFromStorage() {
   try {
 
     const raw =
-      localStorage.getItem(HISTORY_KEY);
+      localStorage.getItem(
+        HISTORY_KEY
+      );
 
-    return raw ? JSON.parse(raw) : [];
+    return raw
+      ? JSON.parse(raw)
+      : [];
 
   } catch (error) {
 
@@ -1074,11 +1566,6 @@ function loadHistoryFromStorage() {
     return [];
   }
 }
-
-
-/* =========================================================
-   HISTORY - SAVE
-========================================================= */
 
 function saveHistoryToStorage(history) {
 
@@ -1098,12 +1585,10 @@ function saveHistoryToStorage(history) {
   }
 }
 
-
-/* =========================================================
-   SAVE RUN
-========================================================= */
-
-function saveRunToHistory(problem, result) {
+function saveRunToHistory(
+  problem,
+  result
+) {
 
   const history =
     loadHistoryFromStorage();
@@ -1124,58 +1609,61 @@ function saveRunToHistory(problem, result) {
 
   history.unshift(entry);
 
-  if (history.length > MAX_HISTORY_ITEMS) {
+  if (
+    history.length >
+    MAX_HISTORY_ITEMS
+  ) {
 
     history.length =
       MAX_HISTORY_ITEMS;
   }
 
-  saveHistoryToStorage(history);
+  saveHistoryToStorage(
+    history
+  );
 
   renderHistory();
 
   return entry.id;
 }
 
-
-/* =========================================================
-   TIMESTAMP
-========================================================= */
-
 function formatTimestamp(iso) {
 
-  const date = new Date(iso);
+  const date =
+    new Date(iso);
 
-  const now = new Date();
+  const now =
+    new Date();
 
   const sameDay =
     date.toDateString() ===
     now.toDateString();
 
   const time =
-    date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
+    date.toLocaleTimeString(
+      [],
+      {
+        hour: "2-digit",
+        minute: "2-digit"
+      }
+    );
 
   if (sameDay) {
     return time;
   }
 
   return (
-    date.toLocaleDateString([], {
-      month: "short",
-      day: "numeric"
-    })
-    + " "
-    + time
+    date.toLocaleDateString(
+      [],
+      {
+        month: "short",
+        day: "numeric"
+      }
+    ) +
+    " " +
+    time
   );
 }
-
-
-/* =========================================================
-   RENDER HISTORY
-========================================================= */
 
 function renderHistory() {
 
@@ -1187,12 +1675,16 @@ function renderHistory() {
       "historyList"
     );
 
-  if (history.length === 0) {
+  if (
+    history.length === 0
+  ) {
 
     list.innerHTML =
-      `<div class="history-empty">
-        No past runs yet.
-      </div>`;
+      `
+        <div class="history-empty">
+          No past runs yet.
+        </div>
+      `;
 
     return;
   }
@@ -1202,17 +1694,23 @@ function renderHistory() {
   history.forEach(entry => {
 
     const item =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     item.className =
       "history-item";
 
-    item.onclick = () =>
-      loadHistoryItem(entry.id);
-
+    item.onclick =
+      () =>
+        loadHistoryItem(
+          entry.id
+        );
 
     const text =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     text.className =
       "history-item-text";
@@ -1220,19 +1718,23 @@ function renderHistory() {
     text.textContent =
       entry.problem;
 
-
     const meta =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     meta.className =
       "history-item-meta";
 
     meta.textContent =
-      formatTimestamp(entry.timestamp);
-
+      formatTimestamp(
+        entry.timestamp
+      );
 
     const deleteButton =
-      document.createElement("button");
+      document.createElement(
+        "button"
+      );
 
     deleteButton.className =
       "history-item-delete";
@@ -1240,28 +1742,23 @@ function renderHistory() {
     deleteButton.textContent =
       "×";
 
-    deleteButton.onclick = event => {
+    deleteButton.onclick =
+      event => {
 
-      event.stopPropagation();
+        event.stopPropagation();
 
-      deleteHistoryItem(entry.id);
-    };
-
+        deleteHistoryItem(
+          entry.id
+        );
+      };
 
     item.appendChild(text);
-
     item.appendChild(meta);
-
     item.appendChild(deleteButton);
 
     list.appendChild(item);
   });
 }
-
-
-/* =========================================================
-   LOAD HISTORY ITEM
-========================================================= */
 
 function loadHistoryItem(id) {
 
@@ -1269,32 +1766,41 @@ function loadHistoryItem(id) {
     loadHistoryFromStorage();
 
   const entry =
-    history.find(item =>
-      item.id === id
+    history.find(
+      item => item.id === id
     );
 
   if (!entry) {
     return;
   }
 
-  currentHistoryId = id;
+  currentHistoryId =
+    id;
 
-  lastResult = entry.result;
+  lastResult =
+    entry.result;
 
-  lastProblem = entry.problem;
+  lastProblem =
+    entry.problem;
 
   currentMode =
-    entry.result.mode || "full";
+    entry.result.mode ||
+    "full";
 
   setMode(currentMode);
 
   document.getElementById(
     "problemInput"
-  ).value = entry.problem;
+  ).value =
+    entry.problem;
 
-    renderResults(entry.result);
-  updateMemoryBadge(entry.result);
+  renderResults(
+    entry.result
+  );
 
+  updateMemoryBadge(
+    entry.result
+  );
 
   const chatLog =
     document.getElementById(
@@ -1303,11 +1809,15 @@ function loadHistoryItem(id) {
 
   chatLog.innerHTML = "";
 
-
-  (entry.chatLog || []).forEach(message => {
+  (
+    entry.chatLog ||
+    []
+  ).forEach(message => {
 
     const div =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     div.className =
       message.role === "q"
@@ -1320,35 +1830,26 @@ function loadHistoryItem(id) {
     chatLog.appendChild(div);
   });
 
-
   document.getElementById(
     "downloadBtn"
   ).style.display =
     "inline-block";
-
 
   document.getElementById(
     "followupSection"
   ).style.display =
     "block";
 
-
   document.getElementById(
     "historyPanel"
   ).style.display =
     "none";
-
 
   window.scrollTo({
     top: 0,
     behavior: "smooth"
   });
 }
-
-
-/* =========================================================
-   DELETE HISTORY
-========================================================= */
 
 function deleteHistoryItem(id) {
 
@@ -1360,20 +1861,20 @@ function deleteHistoryItem(id) {
       item => item.id !== id
     );
 
-  saveHistoryToStorage(history);
+  saveHistoryToStorage(
+    history
+  );
 
   renderHistory();
 
-  if (currentHistoryId === id) {
+  if (
+    currentHistoryId === id
+  ) {
 
-    currentHistoryId = null;
+    currentHistoryId =
+      null;
   }
 }
-
-
-/* =========================================================
-   CLEAR HISTORY
-========================================================= */
 
 function clearHistory() {
 
@@ -1389,15 +1890,11 @@ function clearHistory() {
     HISTORY_KEY
   );
 
-  currentHistoryId = null;
+  currentHistoryId =
+    null;
 
   renderHistory();
 }
-
-
-/* =========================================================
-   TOGGLE HISTORY
-========================================================= */
 
 function toggleHistoryPanel() {
 
@@ -1407,24 +1904,24 @@ function toggleHistoryPanel() {
     );
 
   const open =
-    panel.style.display === "block";
+    panel.style.display ===
+    "block";
 
   panel.style.display =
-    open ? "none" : "block";
+    open
+      ? "none"
+      : "block";
 
   if (!open) {
     renderHistory();
   }
 }
 
-
-/* =========================================================
-   UPDATE CHAT HISTORY
-========================================================= */
-
 function updateCurrentHistoryChatLog() {
 
-  if (currentHistoryId === null) {
+  if (
+    currentHistoryId === null
+  ) {
     return;
   }
 
@@ -1432,8 +1929,10 @@ function updateCurrentHistoryChatLog() {
     loadHistoryFromStorage();
 
   const entry =
-    history.find(item =>
-      item.id === currentHistoryId
+    history.find(
+      item =>
+        item.id ===
+        currentHistoryId
     );
 
   if (!entry) {
@@ -1446,148 +1945,612 @@ function updateCurrentHistoryChatLog() {
     );
 
   entry.chatLog =
-    Array.from(chatLog.children)
-      .map(div => ({
+    Array.from(
+      chatLog.children
+    ).map(div => ({
 
-        role:
-          div.classList.contains(
-            "chat-q"
-          )
-            ? "q"
-            : "a",
+      role:
+        div.classList.contains(
+          "chat-q"
+        )
+          ? "q"
+          : "a",
 
-        text:
-          div.textContent
-      }));
+      text:
+        div.textContent
 
-  saveHistoryToStorage(history);
+    }));
+
+  saveHistoryToStorage(
+    history
+  );
 }
 
 
 /* =========================================================
-   EVENT -> CARD METADATA (for live streaming)
+   EVENT CARD MAP
 ========================================================= */
 
 const EVENT_CARD_MAP = {
-  analysis:            { icon: ICONS.analysis,    title: "Problem Analysis",         className: "analysis-card" },
-  solutionA:           { icon: ICONS.solution,    title: "Solution A",               className: "solution-card" },
-  solutionB:           { icon: ICONS.solution,    title: "Solution B",               className: "solution-card" },
-  costReviewA:         { icon: ICONS.cost,        title: "Cost Critique — Solution A",         className: "cost-card" },
-  feasibilityReviewA:  { icon: ICONS.feasibility, title: "Feasibility Critique — Solution A",  className: "feasibility-card" },
-  costReviewB:         { icon: ICONS.cost,        title: "Cost Critique — Solution B",         className: "cost-card" },
-  feasibilityReviewB:  { icon: ICONS.feasibility, title: "Feasibility Critique — Solution B",  className: "feasibility-card" },
-  rebuttalA:           { icon: ICONS.verdict,     title: "Rebuttal — Solution A",     className: "verdict" },
-  rebuttalB:           { icon: ICONS.verdict,     title: "Rebuttal — Solution B",     className: "verdict" },
-  crossExamA:          { icon: ICONS.verdict,     title: "Cross-Exam — Solution A",   className: "verdict" },
-  crossExamB:          { icon: ICONS.verdict,     title: "Cross-Exam — Solution B",   className: "verdict" },
-  verdict:             { icon: ICONS.verdict,     title: "Final Verdict",            className: "verdict" },
-  refined:             { icon: ICONS.refined,     title: "Refined Winning Solution", className: "refined-card" },
-  redTeamReview:       { icon: ICONS.redteam,     title: "Red Team Review",          className: "redteam-card" }
+
+  analysis: {
+    icon: ICONS.analysis,
+    title: "Problem Analysis",
+    className: "analysis-card",
+    side: "system"
+  },
+
+  solutionA: {
+    icon: ICONS.solution,
+    title: "AI A",
+    className: "solution-card",
+    side: "a"
+  },
+
+  solutionB: {
+    icon: ICONS.solution,
+    title: "AI B",
+    className: "solution-card",
+    side: "b"
+  },
+
+  costReviewA: {
+    icon: ICONS.cost,
+    title: "Cost Critic → A",
+    className: "cost-card",
+    side: "a"
+  },
+
+  feasibilityReviewA: {
+    icon: ICONS.feasibility,
+    title: "Feasibility Critic → A",
+    className: "feasibility-card",
+    side: "a"
+  },
+
+  costReviewB: {
+    icon: ICONS.cost,
+    title: "Cost Critic → B",
+    className: "cost-card",
+    side: "b"
+  },
+
+  feasibilityReviewB: {
+    icon: ICONS.feasibility,
+    title: "Feasibility Critic → B",
+    className: "feasibility-card",
+    side: "b"
+  },
+
+  rebuttalA: {
+    icon: ICONS.verdict,
+    title: "AI A Rebuttal",
+    className: "verdict",
+    side: "a"
+  },
+
+  rebuttalB: {
+    icon: ICONS.verdict,
+    title: "AI B Rebuttal",
+    className: "verdict",
+    side: "b"
+  },
+
+  crossExamA: {
+    icon: ICONS.verdict,
+    title: "AI A Cross-Exam",
+    className: "verdict",
+    side: "a"
+  },
+
+  crossExamB: {
+    icon: ICONS.verdict,
+    title: "AI B Cross-Exam",
+    className: "verdict",
+    side: "b"
+  },
+
+  verifier: {
+    icon: ICONS.verdict,
+    title: "Verifier — Fact Check",
+    className: "verdict",
+    side: "judge"
+  },
+
+  judgeIssues: {
+    icon: ICONS.verdict,
+    title: "Judge — Unresolved Issues",
+    className: "verdict",
+    side: "judge"
+  },
+
+  issueResponseA: {
+    icon: ICONS.verdict,
+    title: "AI A — Issue Response",
+    className: "verdict",
+    side: "a"
+  },
+
+  issueResponseB: {
+    icon: ICONS.verdict,
+    title: "AI B — Issue Response",
+    className: "verdict",
+    side: "b"
+  },
+
+  verdict: {
+    icon: ICONS.verdict,
+    title: "Judge — Final Verdict",
+    className: "verdict",
+    side: "judge"
+  },
+
+  refined: {
+    icon: ICONS.refined,
+    title: "Judge — Refined Solution",
+    className: "refined-card",
+    side: "judge"
+  },
+
+  redTeamReview: {
+    icon: ICONS.redteam,
+    title: "Red Team",
+    className: "redteam-card",
+    side: "b"
+  }
 };
+
+
+/* =========================================================
+   STATUS
+========================================================= */
 
 const STATUS_AFTER = {
-  analysis:            "Generating Solution A...",
-  solutionA:           mode => mode === "quick" ? "Refining the solution..." : "Generating Solution B...",
-  solutionB:           "Running cost critique on Solution A...",
-  costReviewA:         "Running feasibility critique on Solution A...",
-  feasibilityReviewA:  "Running cost critique on Solution B...",
-  costReviewB:         "Running feasibility critique on Solution B...",
-  feasibilityReviewB:  "Solution A preparing its rebuttal...",
-  rebuttalA:           "Solution B preparing its rebuttal...",
-  rebuttalB:           "Solution A cross-examining Solution B's rebuttal...",
-  crossExamA:          "Solution B cross-examining Solution A's rebuttal...",
-  crossExamB:          "Judge weighing solutions, critiques, rebuttals and cross-examination...",
-  verdict:             "Refining the winning solution...",
-  refined:             "Red Team attacking the solution...",
-  redTeamReview:       "Finalizing report..."
+
+  analysis:
+    "Generating Solution A...",
+
+  solutionA:
+    mode =>
+      mode === "quick"
+        ? "Refining the solution..."
+        : "Generating Solution B...",
+
+  solutionB:
+    "Running cost critique on Solution A...",
+
+  costReviewA:
+    "Running feasibility critique on Solution A...",
+
+  feasibilityReviewA:
+    "Running cost critique on Solution B...",
+
+  costReviewB:
+    "Running feasibility critique on Solution B...",
+
+  feasibilityReviewB:
+    "Solution A preparing its rebuttal...",
+
+  rebuttalA:
+    "Solution B preparing its rebuttal...",
+
+  rebuttalB:
+    "Solution A cross-examining Solution B's rebuttal...",
+
+  crossExamA:
+    "Solution B cross-examining Solution A's rebuttal...",
+
+  crossExamB:
+    "Verifying claims...",
+
+  verifier:
+    "Judge identifying unresolved issues...",
+
+  judgeIssues:
+    "Solution A responding to flagged issues...",
+
+  issueResponseA:
+    "Solution B responding to flagged issues...",
+
+  issueResponseB:
+    "Judge weighing all evidence and issuing a verdict...",
+
+  verdict:
+    "Refining the winning solution...",
+
+  refined:
+    "Red Team attacking the solution...",
+
+  redTeamReview:
+    "Finalizing report..."
 };
 
+
+/* =========================================================
+   PIPELINE
+========================================================= */
+
 const PIPELINE_STEPS = [
-  { key: "analysis",           label: "Analysis" },
-  { key: "solutionA",          label: "Solution A" },
-  { key: "solutionB",          label: "Solution B" },
-  { key: "costReviewA",        label: "Cost A" },
-  { key: "feasibilityReviewA", label: "Feasibility A" },
-  { key: "costReviewB",        label: "Cost B" },
-  { key: "feasibilityReviewB", label: "Feasibility B" },
-  { key: "rebuttalA",          label: "Rebuttal A" },
-  { key: "rebuttalB",          label: "Rebuttal B" },
-  { key: "crossExamA",         label: "Cross-Exam A" },
-  { key: "crossExamB",         label: "Cross-Exam B" },
-  { key: "verdict",            label: "Verdict" },
-  { key: "refined",            label: "Refined" },
-  { key: "redTeamReview",      label: "Red Team" }
+
+  {
+    key: "analysis",
+    label: "Analysis"
+  },
+
+  {
+    key: "solutionA",
+    label: "Solution A"
+  },
+
+  {
+    key: "solutionB",
+    label: "Solution B"
+  },
+
+  {
+    key: "costReviewA",
+    label: "Cost A"
+  },
+
+  {
+    key: "feasibilityReviewA",
+    label: "Feasibility A"
+  },
+
+  {
+    key: "costReviewB",
+    label: "Cost B"
+  },
+
+  {
+    key: "feasibilityReviewB",
+    label: "Feasibility B"
+  },
+
+  {
+    key: "rebuttalA",
+    label: "Rebuttal A"
+  },
+
+  {
+    key: "rebuttalB",
+    label: "Rebuttal B"
+  },
+
+  {
+    key: "crossExamA",
+    label: "Cross-Exam A"
+  },
+
+  {
+    key: "crossExamB",
+    label: "Cross-Exam B"
+  },
+
+  {
+    key: "verifier",
+    label: "Verifier"
+  },
+
+  {
+    key: "judgeIssues",
+    label: "Issues"
+  },
+
+  {
+    key: "issueResponseA",
+    label: "Issue Resp A"
+  },
+
+  {
+    key: "issueResponseB",
+    label: "Issue Resp B"
+  },
+
+  {
+    key: "verdict",
+    label: "Verdict"
+  },
+
+  {
+    key: "refined",
+    label: "Refined"
+  },
+
+  {
+    key: "redTeamReview",
+    label: "Red Team"
+  }
 ];
 
 function renderPipelineTracker(mode) {
-  const tracker = document.getElementById("pipelineTracker");
-  const steps = mode === "quick"
-    ? PIPELINE_STEPS.filter(s => ["analysis", "solutionA", "refined"].includes(s.key))
-    : PIPELINE_STEPS;
 
-  tracker.innerHTML = steps.map(s =>
-    `<div class="pipeline-step" data-key="${s.key}"><span class="dot"></span>${s.label}</div>`
-  ).join("");
+  const tracker =
+    document.getElementById(
+      "pipelineTracker"
+    );
 
-  tracker.style.display = "flex";
+  const steps =
+    mode === "quick"
+      ? PIPELINE_STEPS.filter(
+          s =>
+            [
+              "analysis",
+              "solutionA",
+              "refined"
+            ].includes(s.key)
+        )
+      : PIPELINE_STEPS;
+
+  tracker.innerHTML =
+    steps
+      .map(
+        s =>
+          `
+            <div
+              class="pipeline-step"
+              data-key="${s.key}">
+              <span class="dot"></span>
+              ${s.label}
+            </div>
+          `
+      )
+      .join("");
+
+  tracker.style.display =
+    "flex";
 }
 
-function markPipelineStep(key, state) {
-  const tracker = document.getElementById("pipelineTracker");
-  const el = tracker.querySelector(`[data-key="${key}"]`);
-  if (!el) return;
-  el.classList.remove("active", "done");
-  if (state) el.classList.add(state);
+function markPipelineStep(
+  key,
+  state
+) {
+
+  const tracker =
+    document.getElementById(
+      "pipelineTracker"
+    );
+
+  const el =
+    tracker.querySelector(
+      `[data-key="${key}"]`
+    );
+
+  if (!el) {
+    return;
+  }
+
+  el.classList.remove(
+    "active",
+    "done"
+  );
+
+  if (state) {
+    el.classList.add(state);
+  }
 }
 
 function markAllPipelineDone() {
-  document.querySelectorAll(".pipeline-step").forEach(el => {
-    el.classList.remove("active");
-    el.classList.add("done");
-  });
+
+  document
+    .querySelectorAll(
+      ".pipeline-step"
+    )
+    .forEach(el => {
+
+      el.classList.remove(
+        "active"
+      );
+
+      el.classList.add(
+        "done"
+      );
+
+    });
 }
 
 
 /* =========================================================
-   PARSE ONE SSE FRAME
+   STREAMING CARDS
+========================================================= */
+
+const streamingCardBodies = {};
+
+function ensureStreamingCard(key) {
+
+  if (
+    streamingCardBodies[key]
+  ) {
+
+    return streamingCardBodies[key];
+  }
+
+  const meta =
+    EVENT_CARD_MAP[key];
+
+  if (!meta) {
+    return null;
+  }
+
+  const results =
+    document.getElementById(
+      "results"
+    );
+
+  const cardId =
+    "card-body-" + key;
+
+  results.insertAdjacentHTML(
+    "beforeend",
+
+    `
+      <div class="room-msg side-${meta.side}">
+
+        <div class="room-msg-label">
+          ${escapeHTML(meta.title)}
+        </div>
+
+        <div
+          class="card-body"
+          id="${cardId}">
+        </div>
+
+      </div>
+    `
+  );
+
+  const bodyEl =
+    document.getElementById(
+      cardId
+    );
+
+  streamingCardBodies[key] =
+    bodyEl;
+
+  bodyEl
+    .closest(".room-msg")
+    .scrollIntoView({
+      behavior: "smooth",
+      block: "end"
+    });
+
+  return bodyEl;
+}
+
+function appendToStreamingCard(
+  key,
+  chunkText
+) {
+
+  const bodyEl =
+    ensureStreamingCard(key);
+
+  if (!bodyEl) {
+    return;
+  }
+
+  bodyEl.textContent +=
+    chunkText;
+}
+
+function finalizeStreamingCard(
+  key,
+  finalText
+) {
+
+  const bodyEl =
+    streamingCardBodies[key];
+
+  if (bodyEl) {
+
+    bodyEl.textContent =
+      finalText;
+  }
+}
+
+
+/* =========================================================
+   SSE PARSER
 ========================================================= */
 
 function parseSSEFrame(frame) {
 
-  let eventName = "message";
+  let eventName =
+    "message";
+
   let dataLines = [];
 
-  frame.split("\n").forEach(line => {
+  frame
+    .split("\n")
+    .forEach(line => {
 
-    if (line.startsWith("event:")) {
-      eventName = line.slice(6).trim();
-    } else if (line.startsWith("data:")) {
-      dataLines.push(line.slice(5).trim());
-    }
-  });
+      if (
+        line.startsWith("event:")
+      ) {
+
+        eventName =
+          line
+            .slice(6)
+            .trim();
+
+      } else if (
+        line.startsWith("data:")
+      ) {
+
+        dataLines.push(
+          line
+            .slice(5)
+            .trim()
+        );
+      }
+
+    });
 
   let data = null;
 
   try {
-    data = JSON.parse(dataLines.join("\n"));
+
+    data =
+      JSON.parse(
+        dataLines.join("\n")
+      );
+
   } catch {
-    data = dataLines.join("\n");
+
+    data =
+      dataLines.join("\n");
   }
 
-  return { eventName, data };
+  return {
+    eventName,
+    data
+  };
 }
 
 
 /* =========================================================
-   RUN WAR ROOM (STREAMING)
+   RUN WAR ROOM
 ========================================================= */
 
 async function runWarRoom() {
 
   const problem =
+    document
+      .getElementById(
+        "problemInput"
+      )
+      .value
+      .trim();
+
+  const runButton =
     document.getElementById(
-      "problemInput"
-    ).value.trim();
+      "runBtn"
+    );
+
+  const downloadButton =
+    document.getElementById(
+      "downloadBtn"
+    );
+
+  const loading =
+    document.getElementById(
+      "loading"
+    );
+
+  const results =
+    document.getElementById(
+      "results"
+    );
+
+  const followup =
+    document.getElementById(
+      "followupSection"
+    );
+
+  const chatLog =
+    document.getElementById(
+      "chatLog"
+    );
 
   if (!problem) {
 
@@ -1598,148 +2561,377 @@ async function runWarRoom() {
     return;
   }
 
-  const runButton =
-    document.getElementById("runBtn");
+  runButton.disabled =
+    true;
 
-  const downloadButton =
-    document.getElementById("downloadBtn");
+  downloadButton.style.display =
+    "none";
 
-  const loading =
-    document.getElementById("loading");
+  followup.style.display =
+    "none";
 
-  const results =
-    document.getElementById("results");
+  chatLog.innerHTML =
+    "";
 
-  const followup =
-    document.getElementById("followupSection");
+  results.innerHTML =
+    "";
 
-  const chatLog =
-    document.getElementById("chatLog");
+  Object.keys(
+    streamingCardBodies
+  ).forEach(key => {
 
-  runButton.disabled = true;
-  downloadButton.style.display = "none";
-  followup.style.display = "none";
-  chatLog.innerHTML = "";
-  results.innerHTML = "";
-  loading.style.display = "block";
-  loading.textContent = "Analyzing the problem...";
-  renderPipelineTracker(currentMode);
-  markPipelineStep("analysis", "active");
-  currentHistoryId = null;
+    delete streamingCardBodies[key];
 
-  let finalResult = null;
-  let hadError = false;
+  });
+
+  resetConfidenceMeter();
+
+  const confidenceMeter =
+    document.getElementById(
+      "confidenceMeter"
+    );
+
+  if (confidenceMeter) {
+
+    confidenceMeter.style.display =
+      currentMode === "full"
+        ? "block"
+        : "none";
+  }
+
+  loading.style.display =
+    "block";
+
+  loading.textContent =
+    "Analyzing the problem...";
+
+  renderPipelineTracker(
+    currentMode
+  );
+
+  markPipelineStep(
+    "analysis",
+    "active"
+  );
+
+  currentHistoryId =
+    null;
+
+  let finalResult =
+    null;
+
+  let hadError =
+    false;
 
   try {
 
     const response =
-      await fetch("/api/run-stream", {
+      await fetch(
+        "/api/run-stream",
+        {
+          method: "POST",
 
-        method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-        headers: {
-          "Content-Type": "application/json"
-        },
+          body:
+            JSON.stringify({
 
-        body: JSON.stringify({
-          problem: problem,
-          mode: currentMode
-        })
-      });
+              problem:
+                problem,
 
-    if (!response.ok || !response.body) {
-      throw new Error("Could not connect to the server.");
+              mode:
+                currentMode,
+
+              debateStyle:
+                currentDebateStyle
+
+            })
+        }
+      );
+
+    if (
+      !response.ok ||
+      !response.body
+    ) {
+
+      throw new Error(
+        "Could not connect to the server."
+      );
     }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+    const reader =
+      response.body.getReader();
+
+    const decoder =
+      new TextDecoder(
+        "utf-8"
+      );
+
     let buffer = "";
 
     while (true) {
 
-      const { done, value } = await reader.read();
+      const {
+        done,
+        value
+      } =
+        await reader.read();
 
       if (done) {
         break;
       }
 
-      buffer += decoder.decode(value, { stream: true });
+      buffer +=
+        decoder.decode(
+          value,
+          {
+            stream: true
+          }
+        );
 
       let boundary;
 
-      while ((boundary = buffer.indexOf("\n\n")) !== -1) {
+      while (
+        (boundary =
+          buffer.indexOf(
+            "\n\n"
+          )) !== -1
+      ) {
 
-        const frame = buffer.slice(0, boundary);
+        const frame =
+          buffer.slice(
+            0,
+            boundary
+          );
 
-        buffer = buffer.slice(boundary + 2);
+        buffer =
+          buffer.slice(
+            boundary + 2
+          );
 
         if (!frame.trim()) {
           continue;
         }
 
-        const { eventName, data } =
-          parseSSEFrame(frame);
-
-        if (eventName === "error") {
-
-          hadError = true;
-
-          results.innerHTML = createCard(
-            ICONS.analysis,
-            "Error",
-            (data && data.error) ||
-              "Something went wrong. Please try again.",
-            "analysis-card"
+        const {
+          eventName,
+          data
+        } =
+          parseSSEFrame(
+            frame
           );
+
+        if (
+          eventName ===
+          "error"
+        ) {
+
+          hadError =
+            true;
+
+          results.innerHTML =
+            createCard(
+              ICONS.analysis,
+              "Error",
+              (
+                data &&
+                data.error
+              ) ||
+              "Something went wrong. Please try again.",
+              "analysis-card"
+            );
 
           break;
         }
 
-        if (eventName === "done") {
-          finalResult = data;
+        if (
+          eventName ===
+          "done"
+        ) {
+
+          finalResult =
+            data;
+
           continue;
         }
 
-        markPipelineStep(eventName, "done");
+        if (
+          eventName &&
+          eventName.endsWith(
+            ":delta"
+          )
+        ) {
 
-        const meta = EVENT_CARD_MAP[eventName];
+          const baseKey =
+            eventName.slice(
+              0,
+              -":delta".length
+            );
+
+          appendToStreamingCard(
+            baseKey,
+            data
+          );
+
+          continue;
+        }
+
+        markPipelineStep(
+          eventName,
+          "done"
+        );
+
+        nudgeConfidence(
+          eventName
+        );
+
+        /* =====================================================
+           IMPORTANT:
+           Judge's real scores override the live confidence
+           meter when the verdict arrives.
+        ===================================================== */
+
+        if (
+          eventName === "verdict" &&
+          data &&
+          data.scores
+        ) {
+
+          const scoreA =
+            Number(
+              data.scores.A
+            );
+
+          const scoreB =
+            Number(
+              data.scores.B
+            );
+
+          if (
+            Number.isFinite(scoreA) &&
+            Number.isFinite(scoreB)
+          ) {
+
+            confidenceA =
+              Math.max(
+                0,
+                scoreA
+              );
+
+            confidenceB =
+              Math.max(
+                0,
+                scoreB
+              );
+
+            const total =
+              confidenceA +
+              confidenceB;
+
+            if (total > 0) {
+
+              confidenceA =
+                (
+                  confidenceA /
+                  total
+                ) * 100;
+
+              confidenceB =
+                100 -
+                confidenceA;
+            }
+
+            updateConfidenceMeter();
+          }
+        }
+
+        const meta =
+          EVENT_CARD_MAP[
+            eventName
+          ];
 
         if (meta) {
 
-          results.insertAdjacentHTML(
-            "beforeend",
-            createCard(
-              meta.icon,
-              meta.title,
-              getAgentText(data),
-              meta.className
-            )
-          );
+          if (
+            streamingCardBodies[
+              eventName
+            ]
+          ) {
 
-          if (eventName === "verdict") {
+            finalizeStreamingCard(
+              eventName,
+              getAgentText(data)
+            );
+
+          } else {
+
+            ensureStreamingCard(
+              eventName
+            );
+
+            finalizeStreamingCard(
+              eventName,
+              getAgentText(data)
+            );
+          }
+
+          if (
+            eventName ===
+            "verdict"
+          ) {
 
             results.insertAdjacentHTML(
               "beforeend",
+
               createScorecard(
-                data && data.breakdown,
-                data && data.scores
+                data &&
+                data.breakdown,
+
+                data &&
+                data.scores
               )
             );
           }
         }
 
-          const nextStatus = STATUS_AFTER[eventName];
+        const nextStatus =
+          STATUS_AFTER[
+            eventName
+          ];
 
         if (nextStatus) {
 
-          const stepIndex = PIPELINE_STEPS.findIndex(s => s.key === eventName);
-          if (stepIndex !== -1 && PIPELINE_STEPS[stepIndex + 1]) {
-            markPipelineStep(PIPELINE_STEPS[stepIndex + 1].key, "active");
+          const stepIndex =
+            PIPELINE_STEPS.findIndex(
+              step =>
+                step.key ===
+                eventName
+            );
+
+          if (
+            stepIndex !== -1 &&
+            PIPELINE_STEPS[
+              stepIndex + 1
+            ]
+          ) {
+
+            markPipelineStep(
+              PIPELINE_STEPS[
+                stepIndex + 1
+              ].key,
+              "active"
+            );
           }
 
           loading.textContent =
-            typeof nextStatus === "function"
-              ? nextStatus(currentMode)
+            typeof nextStatus ===
+            "function"
+              ? nextStatus(
+                  currentMode
+                )
               : nextStatus;
         }
       }
@@ -1754,37 +2946,58 @@ async function runWarRoom() {
     }
 
     if (!finalResult) {
+
       throw new Error(
         "Stream ended without a result."
       );
     }
-    lastResult = finalResult;
-    lastProblem = problem;
 
-        downloadButton.style.display = "inline-block";
-    followup.style.display = "block";
+    lastResult =
+      finalResult;
 
-    updateMemoryBadge(finalResult);
+    lastProblem =
+      problem;
+
+    downloadButton.style.display =
+      "inline-block";
+
+    followup.style.display =
+      "block";
+
+    updateMemoryBadge(
+      finalResult
+    );
 
     currentHistoryId =
-      saveRunToHistory(problem, finalResult);
+      saveRunToHistory(
+        problem,
+        finalResult
+      );
 
   } catch (error) {
 
-    console.error(error);
-
-    results.innerHTML = createCard(
-      ICONS.analysis,
-      "Error",
-      error.message ||
-        "Something went wrong. Please try again.",
-      "analysis-card"
+    console.error(
+      "War Room Error:",
+      error
     );
+
+    results.innerHTML =
+      createCard(
+        ICONS.analysis,
+        "Error",
+        error.message ||
+          "Something went wrong.",
+        "analysis-card"
+      );
 
   } finally {
 
-    runButton.disabled = false;
-    loading.style.display = "none";
+    runButton.disabled =
+      false;
+
+    loading.style.display =
+      "none";
+
     markAllPipelineDone();
   }
 }
@@ -1804,11 +3017,12 @@ async function askFollowUp() {
   const question =
     input.value.trim();
 
-
-  if (!question || !lastResult) {
+  if (
+    !question ||
+    !lastResult
+  ) {
     return;
   }
-
 
   const askButton =
     document.getElementById(
@@ -1820,9 +3034,10 @@ async function askFollowUp() {
       "chatLog"
     );
 
-
   const questionDiv =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   questionDiv.className =
     "chat-q";
@@ -1834,9 +3049,10 @@ async function askFollowUp() {
     questionDiv
   );
 
-
   const answerDiv =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   answerDiv.className =
     "chat-a";
@@ -1848,11 +3064,11 @@ async function askFollowUp() {
     answerDiv
   );
 
+  input.value =
+    "";
 
-  input.value = "";
-
-  askButton.disabled = true;
-
+  askButton.disabled =
+    true;
 
   const context = {
 
@@ -1870,20 +3086,21 @@ async function askFollowUp() {
       ),
 
     solutionB:
-      lastResult.mode === "full"
+      lastResult.mode ===
+      "full"
         ? getAgentText(
             lastResult.solutionB
           )
         : null,
 
     verdict:
-      lastResult.mode === "full"
+      lastResult.mode ===
+      "full"
         ? getAgentText(
             lastResult.verdict
           )
         : null
   };
-
 
   try {
 
@@ -1898,15 +3115,18 @@ async function askFollowUp() {
               "application/json"
           },
 
-          body: JSON.stringify({
+          body:
+            JSON.stringify({
 
-            context: context,
+              context:
+                context,
 
-            question: question
-          })
+              question:
+                question
+
+            })
         }
       );
-
 
     let data;
 
@@ -1922,7 +3142,6 @@ async function askFollowUp() {
       );
     }
 
-
     if (!response.ok) {
 
       throw new Error(
@@ -1931,11 +3150,9 @@ async function askFollowUp() {
       );
     }
 
-
     answerDiv.textContent =
       data.answer ||
       "No answer returned.";
-
 
   } catch (error) {
 
@@ -1945,7 +3162,8 @@ async function askFollowUp() {
 
   } finally {
 
-    askButton.disabled = false;
+    askButton.disabled =
+      false;
 
     updateCurrentHistoryChatLog();
   }
@@ -1953,23 +3171,27 @@ async function askFollowUp() {
 
 
 /* =========================================================
-   ENTER KEY FOR FOLLOW-UP
+   ENTER KEY
 ========================================================= */
 
 document
-  .getElementById("followupInput")
+  .getElementById(
+    "followupInput"
+  )
   .addEventListener(
     "keydown",
     event => {
 
       if (
-        event.key === "Enter"
+        event.key ===
+        "Enter"
       ) {
 
         event.preventDefault();
 
         askFollowUp();
       }
+
     }
   );
 
@@ -1984,7 +3206,6 @@ function downloadPDF() {
     return;
   }
 
-
   if (
     !window.jspdf ||
     !window.jspdf.jsPDF
@@ -1997,33 +3218,34 @@ function downloadPDF() {
     return;
   }
 
-
-  const { jsPDF } =
+  const {
+    jsPDF
+  } =
     window.jspdf;
-
 
   const doc =
     new jsPDF();
 
-
   const pageWidth =
-    doc.internal.pageSize.getWidth();
-
+    doc.internal.pageSize
+      .getWidth();
 
   const pageHeight =
-    doc.internal.pageSize.getHeight();
+    doc.internal.pageSize
+      .getHeight();
 
-
-  const margin = 15;
+  const margin =
+    15;
 
   const maxWidth =
-    pageWidth - margin * 2;
-
+    pageWidth -
+    margin * 2;
 
   let y = 20;
 
-
-  function ensureSpace(height) {
+  function ensureSpace(
+    height
+  ) {
 
     if (
       y + height >
@@ -2036,25 +3258,25 @@ function downloadPDF() {
     }
   }
 
-
   function addSection(
     title,
     text
   ) {
 
     text =
-      text || "No result.";
-
+      text ||
+      "No result.";
 
     ensureSpace(20);
-
 
     doc.setFont(
       "helvetica",
       "bold"
     );
 
-    doc.setFontSize(13);
+    doc.setFontSize(
+      13
+    );
 
     doc.text(
       title,
@@ -2064,14 +3286,14 @@ function downloadPDF() {
 
     y += 8;
 
-
     doc.setFont(
       "helvetica",
       "normal"
     );
 
-    doc.setFontSize(10);
-
+    doc.setFontSize(
+      10
+    );
 
     const lines =
       doc.splitTextToSize(
@@ -2079,31 +3301,32 @@ function downloadPDF() {
         maxWidth
       );
 
+    lines.forEach(
+      line => {
 
-    lines.forEach(line => {
+        ensureSpace(6);
 
-      ensureSpace(6);
+        doc.text(
+          line,
+          margin,
+          y
+        );
 
-      doc.text(
-        line,
-        margin,
-        y
-      );
-
-      y += 5.5;
-    });
-
+        y += 5.5;
+      }
+    );
 
     y += 8;
   }
-
 
   doc.setFont(
     "helvetica",
     "bold"
   );
 
-  doc.setFontSize(18);
+  doc.setFontSize(
+    18
+  );
 
   doc.text(
     "AI War Room Report",
@@ -2113,14 +3336,14 @@ function downloadPDF() {
 
   y += 10;
 
-
   doc.setFont(
     "helvetica",
     "italic"
   );
 
-  doc.setFontSize(11);
-
+  doc.setFontSize(
+    11
+  );
 
   const problemLines =
     doc.splitTextToSize(
@@ -2129,23 +3352,22 @@ function downloadPDF() {
       maxWidth
     );
 
+  problemLines.forEach(
+    line => {
 
-  problemLines.forEach(line => {
+      ensureSpace(6);
 
-    ensureSpace(6);
+      doc.text(
+        line,
+        margin,
+        y
+      );
 
-    doc.text(
-      line,
-      margin,
-      y
-    );
-
-    y += 6;
-  });
-
+      y += 6;
+    }
+  );
 
   y += 6;
-
 
   addSection(
     "Problem Analysis",
@@ -2154,22 +3376,12 @@ function downloadPDF() {
     )
   );
 
-
   addSection(
     "Solution A",
     getAgentText(
       lastResult.solutionA
     )
   );
-
-
-  addSection(
-    "Refined Winning Solution",
-    getAgentText(
-      lastResult.refined
-    )
-  );
-
 
   if (
     lastResult.mode ===
@@ -2183,23 +3395,39 @@ function downloadPDF() {
       )
     );
 
-
     addSection(
-      "Cost Critique",
+      "Cost Critique — A",
       getAgentText(
-        lastResult.costReview
+        lastResult.costReviewA
       )
     );
 
-
     addSection(
-      "Feasibility Critique",
+      "Feasibility Critique — A",
       getAgentText(
-        lastResult.feasibilityReview
+        lastResult.feasibilityReviewA
       )
     );
 
+    addSection(
+      "Cost Critique — B",
+      getAgentText(
+        lastResult.costReviewB
+      )
+    );
 
+    addSection(
+      "Feasibility Critique — B",
+      getAgentText(
+        lastResult.feasibilityReviewB
+      )
+    );
+    addSection(
+      "Verifier — Fact Check",
+      getAgentText(
+        lastResult.verifier
+      )
+    );
     addSection(
       "Red Team Review",
       getAgentText(
@@ -2207,15 +3435,21 @@ function downloadPDF() {
       )
     );
 
-
     addSection(
       "Final Verdict",
       getAgentText(
         lastResult.verdict
       )
     );
+
   }
 
+  addSection(
+    "Refined Winning Solution",
+    getAgentText(
+      lastResult.refined
+    )
+  );
 
   doc.save(
     "ai-war-room-report.pdf"

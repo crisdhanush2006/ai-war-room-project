@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { callGPT } = require('../shared/callGPT');
+const { callGPTStream } = require('../shared/callGPT');
 const { makeAgentResponse } = require('../shared/agentSchema');
 
 const MEMORY_PATH = path.join(__dirname, '..', 'memory', 'redTeamFindings.json');
@@ -58,7 +58,7 @@ function getPastFindingsSummary() {
     .join('\n');
 }
 
-async function redTeamSolution(solutionText) {
+async function redTeamSolution(solutionText, onToken = () => {}) {
   const systemMessage = 'You are a Red Team. Your job is to attack this solution and find its worst weaknesses, like an adversary would.';
 
   const pastFindings = getPastFindingsSummary();
@@ -79,7 +79,7 @@ At the very end, on its own line, write a one-sentence summary of the single big
 KEY_FLAW: <your one sentence summary here>
 `;
 
-  const result = await callGPT(prompt, systemMessage);
+  const result = await callGPTStream(prompt, systemMessage, onToken);
 
   const match = result.match(/KEY_FLAW:\s*(.+)/);
   if (match && match[1]) {

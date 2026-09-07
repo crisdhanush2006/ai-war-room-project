@@ -1,7 +1,7 @@
-const { callGPT } = require('../shared/callGPT');
+const { callGPTStream } = require('../shared/callGPT');
 const { makeAgentResponse } = require('../shared/agentSchema');
 
-async function generateRebuttalB(solutionA, solutionB, costReviewA, feasibilityReviewA, costReviewB, feasibilityReviewB) {
+async function generateRebuttalB(solutionA, solutionB, costReviewA, feasibilityReviewA, costReviewB, feasibilityReviewB, onToken = () => {}) {
   const systemMessage = 'You are Rebuttal Agent B. You defend Solution B against the critiques it received, and argue why it remains the better choice compared to Solution A.';
 
   const prompt = `
@@ -26,7 +26,7 @@ ${feasibilityReviewA}
 Write a short rebuttal (3-5 sentences) defending Solution B. Address the strongest weaknesses raised against it, and explain why Solution B still holds up better than Solution A overall.
 `;
 
-  const result = await callGPT(prompt, systemMessage);
+  const result = await callGPTStream(prompt, systemMessage, onToken);
 
   return makeAgentResponse({
     agent: 'rebuttal_b',

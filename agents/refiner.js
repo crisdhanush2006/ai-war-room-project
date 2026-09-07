@@ -1,7 +1,7 @@
-const { callGPT } = require('../shared/callGPT');
+const { callGPTStream } = require('../shared/callGPT');
 const { makeAgentResponse } = require('../shared/agentSchema');
 
-async function refineSolution(solutionText) {
+async function refineSolution(solutionText, onToken = () => {}) {
   const systemMessage = 'You are a Refiner. You improve an existing solution by fixing weak points and making it sharper.';
 
   const prompt = `
@@ -14,7 +14,7 @@ Solution:
 ${solutionText}
 `;
 
-  const result = await callGPT(prompt, systemMessage);
+  const result = await callGPTStream(prompt, systemMessage, onToken);
 
   return makeAgentResponse({
     agent: 'refiner',

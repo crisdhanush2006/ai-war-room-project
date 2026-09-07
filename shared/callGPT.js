@@ -57,8 +57,87 @@ async function callGPT(prompt, systemMessage = 'You are a helpful assistant.') {
     }
   }
 
-  // All retries exhausted (or non-retryable error) — surface it.
   throw lastError;
 }
 
-module.exports = { callGPT };
+// ==========================================
+// NEW: STREAMING VERSION
+// Same as callGPT, but calls onToken(chunkText)
+// every time a new piece of text arrives,
+// instead of waiting for the whole thing.
+//
+// Still returns the FULL text at the end,
+// so any code that just awaits it and reads
+// the return value keeps working exactly the
+// same as before.
+// ==========================================
+async function callGPTStream(prompt, systemMessage = 'You are a helpful assistant.', onToken = () => {}) {
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-3.1-flash-lite',
+    generationConfig: {
+      maxOutputTokens: 4096
+    }
+  });
+
+  const fullPrompt = `${systemMessage}\n\n${prompt}`;
+
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    let receivedAnyChunks = false;
+    let fullText = '';
+
+    try {
+      const result = await model.generateContentStream(fullPrompt);
+
+      let chunkCount = 0;
+
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        chunkCount++;
+
+        console.log(`callGPTStream: received chunk #${chunkCount}, length ${chunkText ? chunkText.length : 0}`);
+
+        if (chunkText) {
+          receivedAnyChunks = true;
+          fullText += chunkText;
+          onToken(chunkText);
+        }
+      }
+
+      console.log(`callGPTStream: stream ended, total chunks = ${chunkCount}`);
+
+      return fullText;
+    } catch (error) {
+      lastError = error;
+
+      // If we already streamed some text to the user, don't retry —
+      // that would duplicate/garble what they've already seen.
+      // Just fail with whatever we have (caller can decide what to do).
+      if (receivedAnyChunks) {
+        console.error(`callGPTStream: failed mid-stream after sending partial output: ${error.message}`);
+        throw error;
+      }
+
+      const retryable = isRetryableError(error);
+
+      console.error(
+        `callGPTStream: attempt ${attempt}/${MAX_RETRIES} failed before any output` +
+        (retryable ? ' (retryable)' : ' (not retryable)') +
+        `: ${error.message}`
+      );
+
+      if (!retryable || attempt === MAX_RETRIES) {
+        break;
+      }
+
+      const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
+      console.log(`callGPTStream: retrying in ${delay}ms...`);
+      await sleep(delay);
+    }
+  }
+
+  throw lastError;
+}
+
+module.exports = { callGPT, callGPTStream };
