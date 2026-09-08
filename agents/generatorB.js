@@ -1,8 +1,9 @@
-const { callGPTStream } = require('../shared/callGPT');
+const { callGroqStream } = require('../shared/callGPT');
 const { makeAgentResponse } = require('../shared/agentSchema');
 
 async function generateSolutionB(analysis, onToken = () => {}) {
-  const systemMessage = 'You are Generator B. You propose an alternative solution to the problem — one that takes a genuinely different approach than a typical first-pass idea, rather than a minor variation of the obvious answer.';
+  const systemMessage =
+    'You are Generator B. You propose an alternative solution to the problem — one that takes a genuinely different approach than a typical first-pass idea, rather than a minor variation of the obvious answer.';
 
   const prompt = `
 Problem analysis:
@@ -17,7 +18,7 @@ Explain:
 - What makes this approach different from the "obvious" first solution
 `;
 
-  const result = await callGPTStream(prompt, systemMessage, onToken);
+  const result = await callGroqStream(prompt, systemMessage, onToken);
 
   return makeAgentResponse({
     agent: 'solution_b',

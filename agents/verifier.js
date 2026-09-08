@@ -1,6 +1,40 @@
 const { callGPTStream } = require('../shared/callGPT');
 const { makeAgentResponse } = require('../shared/agentSchema');
 
+function calculateTrustScore(text) {
+  const weights = {
+    'Verified': 1,
+    'Plausible-but-unsourced': 0.5,
+    'Overstated': 0.25,
+    'False': 0
+  };
+
+  const verdictRegex = /VERDICT:\s*(Verified|Plausible-but-unsourced|Overstated|False)/gi;
+  const matches = [...String(text || '').matchAll(verdictRegex)];
+
+  if (matches.length === 0) {
+    return { trustScore: null, totalClaims: 0, breakdown: {} };
+  }
+
+  const breakdown = { Verified: 0, 'Plausible-but-unsourced': 0, Overstated: 0, False: 0 };
+  let totalWeight = 0;
+
+  for (const match of matches) {
+    const verdict = match[1];
+    const normalized = Object.keys(weights).find(
+      k => k.toLowerCase() === verdict.toLowerCase()
+    );
+    if (normalized) {
+      breakdown[normalized]++;
+      totalWeight += weights[normalized];
+    }
+  }
+
+  const trustScore = Math.round((totalWeight / matches.length) * 100);
+
+  return { trustScore, totalClaims: matches.length, breakdown };
+}
+
 async function generateVerifier(solutionA, solutionB, crossExamA, crossExamB, onToken = () => {}) {
   const systemMessage = 'You are a Fact Verifier. You do NOT debate, argue, or pick a winner. Your only job is to identify factual claims made by either side and check whether they are well-supported, plausible, overstated, or false.';
 
@@ -36,9 +70,15 @@ Only include claims that are actually checkable (skip vague opinions like "this 
     console.error('VERIFIER PROOF WRITE FAILED:', e.message);
   }
 
+  const trustData = calculateTrustScore(result);
+  console.log('TRUST SCORE DEBUG:', trustData);
+
   return makeAgentResponse({
     agent: 'verifier',
-    analysis: result
+    analysis: result,
+    trustScore: trustData.trustScore,
+    trustBreakdown: trustData.breakdown,
+    totalClaimsChecked: trustData.totalClaims
   });
 }
 
