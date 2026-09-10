@@ -25,6 +25,82 @@ const { generateCrossExamB } = require('../agents/crossExamB');
 const { generateVerifier } = require('../agents/verifier');
 
 
+// ============================================================
+// DEBATE LOOP
+// ============================================================
+
+async function runDebateLoop(
+  analysis,
+  onEvent = () => {},
+  turns = 6
+) {
+  let history = '';
+  const transcript = [];
+
+  for (let i = 0; i < turns; i++) {
+    const isA = i % 2 === 0;
+    const speaker = isA ? 'A' : 'B';
+
+    const fn = isA
+      ? generateSolutionA
+      : generateSolutionB;
+
+    try {
+      const turn = await fn(
+        analysis,
+        (chunk) => onEvent(`turn_${i}:delta`, chunk),
+        history
+      );
+
+      const text =
+        typeof turn === 'string'
+          ? turn
+          : turn?.analysis || '';
+
+      const safeText = String(text || '').trim();
+
+      onEvent(`turn_${i}`, {
+        speaker,
+        text: safeText
+      });
+
+      history += `\n${speaker}: ${safeText}`;
+
+      transcript.push({
+        speaker,
+        text: safeText
+      });
+
+    } catch (error) {
+      console.error(`Debate turn ${i} failed:`, error);
+
+      const errorText =
+        `Turn ${i + 1} failed: ${error.message || 'Unknown error'}`;
+
+      onEvent(`turn_${i}`, {
+        speaker,
+        text: errorText,
+        error: true
+      });
+
+      history += `\n${speaker}: ${errorText}`;
+
+      transcript.push({
+        speaker,
+        text: errorText,
+        error: true
+      });
+    }
+  }
+
+  return transcript;
+}
+
+
+// ============================================================
+// MAIN WAR ROOM
+// ============================================================
+
 async function runWarRoom(
   problem,
   mode = 'full',
@@ -50,16 +126,49 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 2. GENERATE SOLUTION A
+  // 2. LIVE DEBATE (A vs B, TURN BY TURN)
   // ============================================================
 
-  const solutionA = await generateSolutionA(
+  const transcript = await runDebateLoop(
     analysis.analysis,
-    streamFor('solutionA'),
-    debateStyle
+    onEvent,
+    6
   );
 
+  onEvent('debateTranscript', transcript);
+
+
+  // ============================================================
+  // GET LAST A AND B DEBATE TURNS
+  // ============================================================
+
+  const aTurns = transcript.filter(
+    (turn) => turn.speaker === 'A'
+  );
+
+  const bTurns = transcript.filter(
+    (turn) => turn.speaker === 'B'
+  );
+
+  const lastATurn = aTurns[aTurns.length - 1];
+  const lastBTurn = bTurns[bTurns.length - 1];
+
+
+  // ============================================================
+  // SAFETY FALLBACK
+  // ============================================================
+
+  const solutionA = {
+    analysis: lastATurn?.text || ''
+  };
+
+  const solutionB = {
+    analysis: lastBTurn?.text || ''
+  };
+
+
   onEvent('solutionA', solutionA);
+  onEvent('solutionB', solutionB);
 
 
   // ============================================================
@@ -80,6 +189,7 @@ async function runWarRoom(
       mode,
       problem,
       analysis,
+      transcript,
       solutionA,
       refined
     };
@@ -91,20 +201,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 3. GENERATE SOLUTION B
-  // ============================================================
-
-  const solutionB = await generateSolutionB(
-    analysis.analysis,
-    streamFor('solutionB'),
-    debateStyle
-  );
-
-  onEvent('solutionB', solutionB);
-
-
-  // ============================================================
-  // 4. COST REVIEW - SOLUTION A
+  // 3. COST REVIEW - SOLUTION A
   // ============================================================
 
   const costReviewA = await critiqueCost(
@@ -117,7 +214,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 5. FEASIBILITY REVIEW - SOLUTION A
+  // 4. FEASIBILITY REVIEW - SOLUTION A
   // ============================================================
 
   const feasibilityReviewA = await critiqueFeasibility(
@@ -130,7 +227,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 6. COST REVIEW - SOLUTION B
+  // 5. COST REVIEW - SOLUTION B
   // ============================================================
 
   const costReviewB = await critiqueCost(
@@ -143,7 +240,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 7. FEASIBILITY REVIEW - SOLUTION B
+  // 6. FEASIBILITY REVIEW - SOLUTION B
   // ============================================================
 
   const feasibilityReviewB = await critiqueFeasibility(
@@ -156,7 +253,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 8. REBUTTAL A
+  // 7. REBUTTAL A
   // ============================================================
 
   const rebuttalA = await generateRebuttalA(
@@ -174,7 +271,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 9. REBUTTAL B
+  // 8. REBUTTAL B
   // ============================================================
 
   const rebuttalB = await generateRebuttalB(
@@ -192,7 +289,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 10. CROSS EXAMINATION A
+  // 9. CROSS EXAMINATION A
   // ============================================================
 
   const crossExamA = await generateCrossExamA(
@@ -208,7 +305,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 11. CROSS EXAMINATION B
+  // 10. CROSS EXAMINATION B
   // ============================================================
 
   const crossExamB = await generateCrossExamB(
@@ -224,7 +321,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 12. VERIFIER
+  // 11. VERIFIER
   // ============================================================
 
   const verifier = await generateVerifier(
@@ -239,7 +336,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 13. FIND UNRESOLVED ISSUES
+  // 12. FIND UNRESOLVED ISSUES
   // ============================================================
 
   const judgeIssues = await findUnresolvedIssues(
@@ -255,7 +352,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 14. ISSUE RESPONSE A
+  // 13. ISSUE RESPONSE A
   // ============================================================
 
   const issueResponseA = await respondToIssuesA(
@@ -269,7 +366,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 15. ISSUE RESPONSE B
+  // 14. ISSUE RESPONSE B
   // ============================================================
 
   const issueResponseB = await respondToIssuesB(
@@ -283,7 +380,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 16. FINAL JUDGE
+  // 15. FINAL JUDGE
   // ============================================================
 
   const verdict = await judgeSolutions(
@@ -302,7 +399,12 @@ async function runWarRoom(
       crossExamA: crossExamA.analysis,
       crossExamB: crossExamB.analysis,
 
-      verifier: verifier.analysis
+      verifier: verifier.analysis,
+
+      judgeIssues: judgeIssues.analysis,
+
+      issueResponseA: issueResponseA.analysis,
+      issueResponseB: issueResponseB.analysis
     },
     streamFor('verdict')
   );
@@ -311,17 +413,17 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 17. SELECT WINNING SOLUTION
+  // 16. SELECT WINNING SOLUTION
   // ============================================================
 
   const winningSolution =
-    verdict.winner === 'B'
+    verdict?.winner === 'B'
       ? solutionB.analysis
       : solutionA.analysis;
 
 
   // ============================================================
-  // 18. REFINE WINNING SOLUTION
+  // 17. REFINE WINNING SOLUTION
   // ============================================================
 
   const refined = await refineSolution(
@@ -334,7 +436,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 19. RED TEAM REVIEW
+  // 18. RED TEAM REVIEW
   // ============================================================
 
   const redTeamReview = await redTeamSolution(
@@ -347,7 +449,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 20. TOTAL PAST FINDINGS
+  // 19. TOTAL PAST FINDINGS
   // ============================================================
 
   const totalPastFindingsUsed =
@@ -359,7 +461,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 21. FINAL RESULT
+  // 20. FINAL RESULT
   // ============================================================
 
   const result = {
@@ -367,6 +469,8 @@ async function runWarRoom(
     problem,
 
     analysis,
+
+    transcript,
 
     solutionA,
     solutionB,
@@ -401,7 +505,7 @@ async function runWarRoom(
 
 
   // ============================================================
-  // 22. DONE
+  // 21. DONE
   // ============================================================
 
   onEvent('done', result);
@@ -410,6 +514,11 @@ async function runWarRoom(
 }
 
 
+// ============================================================
+// EXPORTS
+// ============================================================
+
 module.exports = {
-  runWarRoom
+  runWarRoom,
+  runDebateLoop
 };

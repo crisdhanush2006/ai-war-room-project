@@ -1,27 +1,36 @@
 const { callGroqStream } = require('../shared/callGPT');
 const { makeAgentResponse } = require('../shared/agentSchema');
 
-async function generateSolutionB(analysis, onToken = () => {}) {
+async function generateSolutionB(
+  problemBreakdown,
+  onToken = () => {},
+  history = ''
+) {
   const systemMessage =
-    'You are Generator B. You propose an alternative solution to the problem — one that takes a genuinely different approach than a typical first-pass idea, rather than a minor variation of the obvious answer.';
+    'You are Generator B. You propose and defend one clear, practical solution to a problem, reacting critically to what Generator A says.';
 
   const prompt = `
-Problem analysis:
-${analysis}
+Problem breakdown:
+${problemBreakdown}
 
-Propose a solution to this problem. Your solution should take a distinctly different approach than the most obvious, typical first idea — avoid simply restating conventional wisdom.
+Conversation so far:
+${history || '(none yet, this is your opening move)'}
 
-Explain:
-- What the solution is and how it works
-- Why it fits the constraints identified in the analysis
-- Why it meets the success criteria identified in the analysis
-- What makes this approach different from the "obvious" first solution
+Reply as Generator B.
+
+If there is conversation so far, react directly to Generator A's last point.
+Propose or defend ONE clear solution.
+Keep the response short and focused (3-5 sentences).
 `;
 
-  const result = await callGroqStream(prompt, systemMessage, onToken);
+  const result = await callGroqStream(
+    prompt,
+    systemMessage,
+    onToken
+  );
 
   return makeAgentResponse({
-    agent: 'solution_b',
+    agent: 'generator_b',
     analysis: result
   });
 }

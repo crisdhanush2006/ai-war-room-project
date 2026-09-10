@@ -1,4 +1,4 @@
-const { callGPTStream } = require('../shared/callGPT');
+const { callGroqStream } = require('../shared/callGPT');
 const { makeAgentResponse } = require('../shared/agentSchema');
 
 async function analyzeProblem(userProblem, onToken = () => {}) {
@@ -13,7 +13,7 @@ Break down this problem into 3 parts:
 Problem: ${userProblem}
 `;
 
-  const result = await callGPTStream(prompt, systemMessage, onToken);
+  const result = await callGroqStream(prompt, systemMessage, onToken);
 
   return makeAgentResponse({
     agent: 'problem_analyzer',

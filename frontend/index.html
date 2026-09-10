@@ -86,6 +86,7 @@ button.run:hover:not(:disabled) {
 
 button:disabled {
   cursor: not-allowed;
+  opacity: .65;
 }
 
 /* ================= HISTORY ================= */
@@ -277,7 +278,7 @@ textarea::placeholder {
   margin-top: 14px;
 }
 
-/* ================= PIPELINE TRACKER ================= */
+/* ================= PIPELINE ================= */
 
 .pipeline-tracker {
   display: none;
@@ -332,12 +333,13 @@ textarea::placeholder {
   0%, 100% {
     opacity: 1;
   }
+
   50% {
     opacity: .35;
   }
 }
 
-/* ================= RESULT CARDS ================= */
+/* ================= CARDS ================= */
 
 .card {
   background: #1f2126;
@@ -384,14 +386,6 @@ textarea::placeholder {
   flex-shrink: 0;
 }
 
-.card-body {
-  font-size: 13px;
-  line-height: 1.7;
-  color: #cfcfcf;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
 .analysis-card .result-icon {
   color: #5b8cff;
 }
@@ -416,7 +410,7 @@ textarea::placeholder {
   color: #ff6b6b;
 }
 
-/* Verdict */
+/* ================= VERDICT ================= */
 
 .card.verdict {
   border-color: #4caf7d;
@@ -427,7 +421,7 @@ textarea::placeholder {
   color: #4caf7d;
 }
 
-/* ================= DEBATE MODE ================= */
+/* ================= DEBATE STYLE ================= */
 
 .style-row {
   display: flex;
@@ -460,7 +454,7 @@ textarea::placeholder {
   color: #d9b3ff;
 }
 
-/* ================= CONFIDENCE METER ================= */
+/* ================= CONFIDENCE ================= */
 
 #confidenceMeter {
   display: none;
@@ -502,7 +496,7 @@ textarea::placeholder {
   transition: width .5s ease;
 }
 
-/* ================= ROOM BUBBLES ================= */
+/* ================= ROOM ================= */
 
 .room-msg {
   max-width: 85%;
@@ -520,7 +514,7 @@ textarea::placeholder {
   font-size: 11px;
   font-weight: 700;
   margin-bottom: 6px;
-  opacity: 0.85;
+  opacity: .85;
 }
 
 .room-msg.side-a {
@@ -567,6 +561,26 @@ textarea::placeholder {
 
 .room-msg.side-system .room-msg-label {
   color: #5b8cff;
+}
+
+/* ================= STREAMING CURSOR ================= */
+
+.room-msg.streaming .card-body::after {
+  content: "▋";
+  display: inline-block;
+  margin-left: 2px;
+  animation: blinkCursor .8s infinite;
+  opacity: .8;
+}
+
+@keyframes blinkCursor {
+  0%, 45% {
+    opacity: 1;
+  }
+
+  46%, 100% {
+    opacity: 0;
+  }
 }
 
 /* ================= SCORECARD ================= */
@@ -724,6 +738,10 @@ textarea::placeholder {
   button.run {
     width: 100%;
   }
+
+  .room-msg {
+    max-width: 95%;
+  }
 }
 </style>
 </head>
@@ -731,8 +749,6 @@ textarea::placeholder {
 <body>
 
 <div class="wrap">
-
-  <!-- HEADER -->
 
   <div class="header-row">
 
@@ -745,24 +761,18 @@ textarea::placeholder {
       </p>
     </header>
 
-    <button
-      id="historyToggleBtn"
-      onclick="toggleHistoryPanel()">
+    <button id="historyToggleBtn" onclick="toggleHistoryPanel()">
       History
     </button>
 
   </div>
-
-  <!-- HISTORY -->
 
   <div id="historyPanel">
 
     <h4>
       <span>Past runs</span>
 
-      <button
-        id="clearHistoryBtn"
-        onclick="clearHistory()">
+      <button id="clearHistoryBtn" onclick="clearHistory()">
         Clear all
       </button>
     </h4>
@@ -771,13 +781,10 @@ textarea::placeholder {
 
   </div>
 
-  <!-- PROBLEM -->
-
   <textarea
     id="problemInput"
-    placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"></textarea>
-
-  <!-- DEBATE STYLE -->
+    placeholder="e.g. How do we reduce food delivery time in a city with heavy traffic?"
+  ></textarea>
 
   <div class="style-row" id="styleRow">
 
@@ -815,8 +822,6 @@ textarea::placeholder {
 
   </div>
 
-  <!-- MODE -->
-
   <div class="mode-row">
 
     <button
@@ -847,8 +852,6 @@ textarea::placeholder {
 
   </div>
 
-  <!-- ACTIONS -->
-
   <button
     class="run"
     id="runBtn"
@@ -868,11 +871,7 @@ textarea::placeholder {
 
   <div id="pipelineTracker" class="pipeline-tracker"></div>
 
-  <!-- CONFIDENCE METER -->
-
-  <div
-    id="confidenceMeter"
-    aria-label="Live confidence meter">
+  <div id="confidenceMeter" aria-label="Live confidence meter">
 
     <div class="meter-labels">
       <span class="a-label">AI A</span>
@@ -897,13 +896,9 @@ textarea::placeholder {
 
   </div>
 
-  <!-- RESULTS -->
-
   <div id="memoryBadge"></div>
 
   <div id="results"></div>
-
-  <!-- FOLLOW UP -->
 
   <div id="followupSection">
 
@@ -941,6 +936,21 @@ textarea::placeholder {
 let currentMode = "full";
 let currentDebateStyle = "balanced";
 
+let confidenceA = 50;
+let confidenceB = 50;
+
+let lastResult = null;
+let lastProblem = "";
+let currentHistoryId = null;
+
+const HISTORY_KEY = "aiWarRoomHistory";
+const MAX_HISTORY_ITEMS = 30;
+
+
+/* =========================================================
+   DEBATE STYLE
+========================================================= */
+
 function setDebateStyle(style) {
 
   const allowedStyles = [
@@ -967,11 +977,9 @@ function setDebateStyle(style) {
     });
 }
 
-let confidenceA = 50;
-let confidenceB = 50;
 
 /* =========================================================
-   CONFIDENCE NUDGE
+   CONFIDENCE
 ========================================================= */
 
 const CONFIDENCE_NUDGE = {
@@ -1003,15 +1011,10 @@ function updateConfidenceMeter() {
   const fillB =
     document.getElementById("meterFillB");
 
-  if (!fillA || !fillB) {
-    return;
-  }
+  if (!fillA || !fillB) return;
 
-  fillA.style.width =
-    confidenceA + "%";
-
-  fillB.style.width =
-    confidenceB + "%";
+  fillA.style.width = confidenceA + "%";
+  fillB.style.width = confidenceB + "%";
 }
 
 function nudgeConfidence(eventName) {
@@ -1019,9 +1022,7 @@ function nudgeConfidence(eventName) {
   const nudge =
     CONFIDENCE_NUDGE[eventName];
 
-  if (nudge === undefined) {
-    return;
-  }
+  if (nudge === undefined) return;
 
   confidenceA =
     Math.min(
@@ -1046,16 +1047,6 @@ function resetConfidenceMeter() {
   updateConfidenceMeter();
 }
 
-let lastResult = null;
-let lastProblem = "";
-let currentHistoryId = null;
-
-const HISTORY_KEY =
-  "aiWarRoomHistory";
-
-const MAX_HISTORY_ITEMS =
-  30;
-
 
 /* =========================================================
    SVG ICONS
@@ -1064,63 +1055,98 @@ const MAX_HISTORY_ITEMS =
 const ICONS = {
 
   analysis: `
-    <svg class="result-icon" viewBox="0 0 24 24">
+    <svg
+      class="result-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true">
+
       <circle cx="11" cy="11" r="7"></circle>
       <path d="M20 20l-4-4"></path>
       <path d="M8 11h6"></path>
       <path d="M11 8v6"></path>
+
     </svg>
   `,
 
   solution: `
-    <svg class="result-icon" viewBox="0 0 24 24">
+    <svg
+      class="result-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true">
+
       <path d="M9 18h6"></path>
       <path d="M10 22h4"></path>
       <path d="M8 14.5a7 7 0 1 1 8 0c-1.2.8-2 1.7-2 3.5h-4c0-1.8-.8-2.7-2-3.5z"></path>
+
     </svg>
   `,
 
   refined: `
-    <svg class="result-icon" viewBox="0 0 24 24">
+    <svg
+      class="result-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true">
+
       <path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3z"></path>
       <path d="M19 3v4"></path>
       <path d="M21 5h-4"></path>
+
     </svg>
   `,
 
   cost: `
-    <svg class="result-icon" viewBox="0 0 24 24">
+    <svg
+      class="result-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true">
+
       <circle cx="12" cy="12" r="9"></circle>
       <path d="M15 8.5c-.7-.7-1.7-1-3-1-1.7 0-3 .9-3 2.2 0 1.4 1.2 1.9 3 2.3 1.8.4 3 1 3 2.4 0 1.4-1.3 2.3-3.1 2.3-1.4 0-2.5-.4-3.3-1.2"></path>
       <path d="M12 6v12"></path>
+
     </svg>
   `,
 
   feasibility: `
-    <svg class="result-icon" viewBox="0 0 24 24">
+    <svg
+      class="result-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true">
+
       <path d="M4 20V10"></path>
       <path d="M10 20V4"></path>
       <path d="M16 20v-7"></path>
       <path d="M22 20H2"></path>
+
     </svg>
   `,
 
   redteam: `
-    <svg class="result-icon" viewBox="0 0 24 24">
+    <svg
+      class="result-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true">
+
       <path d="M12 3l8 4v5c0 5-3.4 8-8 9-4.6-1-8-4-8-9V7l8-4z"></path>
       <path d="M9 9l6 6"></path>
       <path d="M15 9l-6 6"></path>
+
     </svg>
   `,
 
   verdict: `
-    <svg class="result-icon" viewBox="0 0 24 24">
+    <svg
+      class="result-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true">
+
       <path d="M8 4h8"></path>
       <path d="M12 4v12"></path>
       <path d="M7 20h10"></path>
       <path d="M6 8h12"></path>
       <path d="M5 8l-3 5h6L5 8z"></path>
       <path d="M19 8l-3 5h6l-3-5z"></path>
+
     </svg>
   `
 };
@@ -1132,20 +1158,23 @@ const ICONS = {
 
 function setMode(mode) {
 
-  currentMode = mode;
+  currentMode =
+    mode === "quick"
+      ? "quick"
+      : "full";
 
   document
     .getElementById("quickBtn")
     .classList.toggle(
       "active",
-      mode === "quick"
+      currentMode === "quick"
     );
 
   document
     .getElementById("fullBtn")
     .classList.toggle(
       "active",
-      mode === "full"
+      currentMode === "full"
     );
 }
 
@@ -1210,9 +1239,12 @@ function createScorecard(
   const isTie =
     scores &&
     scores.A !== null &&
+    scores.A !== undefined &&
     scores.B !== null &&
+    scores.B !== undefined &&
     Math.abs(
-      scores.A - scores.B
+      Number(scores.A) -
+      Number(scores.B)
     ) <= 3;
 
   if (
@@ -1230,12 +1262,8 @@ function createScorecard(
         </div>
 
         <div class="card-body">
-          <p>
-            Scores could not be generated for this run
-            because the judge's response could not be parsed.
-            The verdict above is still valid — just without
-            a numeric breakdown.
-          </p>
+          Scores could not be generated for this run
+          because the judge response could not be parsed.
         </div>
 
       </div>
@@ -1344,7 +1372,7 @@ function createScorecard(
 
 
 /* =========================================================
-   CREATE RESULT CARD
+   RESULT CARD
 ========================================================= */
 
 function createCard(
@@ -1355,16 +1383,11 @@ function createCard(
 ) {
 
   return `
-    <div class="card ${className}">
+    <div class="card ${escapeHTML(className)}">
 
       <div class="result-header">
-
         ${icon}
-
-        <h3>
-          ${escapeHTML(title)}
-        </h3>
-
+        <h3>${escapeHTML(title)}</h3>
       </div>
 
       <div class="card-body">
@@ -1400,8 +1423,6 @@ function renderResults(data) {
 
   let html = "";
 
-  /* Analysis */
-
   html += createCard(
     ICONS.analysis,
     "Problem Analysis",
@@ -1409,16 +1430,12 @@ function renderResults(data) {
     "analysis-card"
   );
 
-  /* Solution A */
-
   html += createCard(
     ICONS.solution,
     "Solution A",
     getAgentText(data.solutionA),
     "solution-card"
   );
-
-  /* Full */
 
   if (data.mode === "full") {
 
@@ -1457,6 +1474,80 @@ function renderResults(data) {
       "feasibility-card"
     );
 
+    /* Debate evidence */
+
+    if (data.rebuttalA) {
+      html += createCard(
+        ICONS.verdict,
+        "AI A Rebuttal",
+        getAgentText(data.rebuttalA),
+        "verdict"
+      );
+    }
+
+    if (data.rebuttalB) {
+      html += createCard(
+        ICONS.verdict,
+        "AI B Rebuttal",
+        getAgentText(data.rebuttalB),
+        "verdict"
+      );
+    }
+
+    if (data.crossExamA) {
+      html += createCard(
+        ICONS.verdict,
+        "AI A Cross-Exam",
+        getAgentText(data.crossExamA),
+        "verdict"
+      );
+    }
+
+    if (data.crossExamB) {
+      html += createCard(
+        ICONS.verdict,
+        "AI B Cross-Exam",
+        getAgentText(data.crossExamB),
+        "verdict"
+      );
+    }
+
+    if (data.verifier) {
+      html += createCard(
+        ICONS.verdict,
+        "Verifier — Fact Check",
+        getAgentText(data.verifier),
+        "verdict"
+      );
+    }
+
+    if (data.judgeIssues) {
+      html += createCard(
+        ICONS.verdict,
+        "Judge — Unresolved Issues",
+        getAgentText(data.judgeIssues),
+        "verdict"
+      );
+    }
+
+    if (data.issueResponseA) {
+      html += createCard(
+        ICONS.verdict,
+        "AI A — Issue Response",
+        getAgentText(data.issueResponseA),
+        "verdict"
+      );
+    }
+
+    if (data.issueResponseB) {
+      html += createCard(
+        ICONS.verdict,
+        "AI B — Issue Response",
+        getAgentText(data.issueResponseB),
+        "verdict"
+      );
+    }
+
     html += createCard(
       ICONS.redteam,
       "Red Team Review",
@@ -1479,30 +1570,17 @@ function renderResults(data) {
       data.verdict.scores
     );
 
-  } else {
-
-    html += createCard(
-      ICONS.refined,
-      "Refined Winning Solution",
-      getAgentText(data.refined),
-      "refined-card"
-    );
   }
 
-  if (
-    data.mode === "full" &&
-    data.refined
-  ) {
+  html += createCard(
+    ICONS.refined,
+    "Refined Winning Solution",
+    getAgentText(data.refined),
+    "refined-card"
+  );
 
-    html += createCard(
-      ICONS.refined,
-      "Refined Winning Solution",
-      getAgentText(data.refined),
-      "refined-card"
-    );
-  }
-
-  results.innerHTML = html;
+  results.innerHTML =
+    html;
 }
 
 
@@ -1597,9 +1675,9 @@ function saveRunToHistory(
 
     id: Date.now(),
 
-    problem: problem,
+    problem,
 
-    result: result,
+    result,
 
     chatLog: [],
 
@@ -1613,7 +1691,6 @@ function saveRunToHistory(
     history.length >
     MAX_HISTORY_ITEMS
   ) {
-
     history.length =
       MAX_HISTORY_ITEMS;
   }
@@ -1675,9 +1752,7 @@ function renderHistory() {
       "historyList"
     );
 
-  if (
-    history.length === 0
-  ) {
+  if (!history.length) {
 
     list.innerHTML =
       `
@@ -1694,23 +1769,17 @@ function renderHistory() {
   history.forEach(entry => {
 
     const item =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     item.className =
       "history-item";
 
     item.onclick =
       () =>
-        loadHistoryItem(
-          entry.id
-        );
+        loadHistoryItem(entry.id);
 
     const text =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     text.className =
       "history-item-text";
@@ -1719,9 +1788,7 @@ function renderHistory() {
       entry.problem;
 
     const meta =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     meta.className =
       "history-item-meta";
@@ -1732,9 +1799,7 @@ function renderHistory() {
       );
 
     const deleteButton =
-      document.createElement(
-        "button"
-      );
+      document.createElement("button");
 
     deleteButton.className =
       "history-item-delete";
@@ -1770,9 +1835,7 @@ function loadHistoryItem(id) {
       item => item.id === id
     );
 
-  if (!entry) {
-    return;
-  }
+  if (!entry) return;
 
   currentHistoryId =
     id;
@@ -1815,9 +1878,7 @@ function loadHistoryItem(id) {
   ).forEach(message => {
 
     const div =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     div.className =
       message.role === "q"
@@ -1870,9 +1931,7 @@ function deleteHistoryItem(id) {
   if (
     currentHistoryId === id
   ) {
-
-    currentHistoryId =
-      null;
+    currentHistoryId = null;
   }
 }
 
@@ -1890,8 +1949,7 @@ function clearHistory() {
     HISTORY_KEY
   );
 
-  currentHistoryId =
-    null;
+  currentHistoryId = null;
 
   renderHistory();
 }
@@ -1935,9 +1993,7 @@ function updateCurrentHistoryChatLog() {
         currentHistoryId
     );
 
-  if (!entry) {
-    return;
-  }
+  if (!entry) return;
 
   const chatLog =
     document.getElementById(
@@ -1950,9 +2006,7 @@ function updateCurrentHistoryChatLog() {
     ).map(div => ({
 
       role:
-        div.classList.contains(
-          "chat-q"
-        )
+        div.classList.contains("chat-q")
           ? "q"
           : "a",
 
@@ -2172,95 +2226,25 @@ const STATUS_AFTER = {
 
 const PIPELINE_STEPS = [
 
-  {
-    key: "analysis",
-    label: "Analysis"
-  },
+  { key: "analysis", label: "Analysis" },
+  { key: "solutionA", label: "Solution A" },
+  { key: "solutionB", label: "Solution B" },
+  { key: "costReviewA", label: "Cost A" },
+  { key: "feasibilityReviewA", label: "Feasibility A" },
+  { key: "costReviewB", label: "Cost B" },
+  { key: "feasibilityReviewB", label: "Feasibility B" },
+  { key: "rebuttalA", label: "Rebuttal A" },
+  { key: "rebuttalB", label: "Rebuttal B" },
+  { key: "crossExamA", label: "Cross-Exam A" },
+  { key: "crossExamB", label: "Cross-Exam B" },
+  { key: "verifier", label: "Verifier" },
+  { key: "judgeIssues", label: "Issues" },
+  { key: "issueResponseA", label: "Issue Resp A" },
+  { key: "issueResponseB", label: "Issue Resp B" },
+  { key: "verdict", label: "Verdict" },
+  { key: "refined", label: "Refined" },
+  { key: "redTeamReview", label: "Red Team" }
 
-  {
-    key: "solutionA",
-    label: "Solution A"
-  },
-
-  {
-    key: "solutionB",
-    label: "Solution B"
-  },
-
-  {
-    key: "costReviewA",
-    label: "Cost A"
-  },
-
-  {
-    key: "feasibilityReviewA",
-    label: "Feasibility A"
-  },
-
-  {
-    key: "costReviewB",
-    label: "Cost B"
-  },
-
-  {
-    key: "feasibilityReviewB",
-    label: "Feasibility B"
-  },
-
-  {
-    key: "rebuttalA",
-    label: "Rebuttal A"
-  },
-
-  {
-    key: "rebuttalB",
-    label: "Rebuttal B"
-  },
-
-  {
-    key: "crossExamA",
-    label: "Cross-Exam A"
-  },
-
-  {
-    key: "crossExamB",
-    label: "Cross-Exam B"
-  },
-
-  {
-    key: "verifier",
-    label: "Verifier"
-  },
-
-  {
-    key: "judgeIssues",
-    label: "Issues"
-  },
-
-  {
-    key: "issueResponseA",
-    label: "Issue Resp A"
-  },
-
-  {
-    key: "issueResponseB",
-    label: "Issue Resp B"
-  },
-
-  {
-    key: "verdict",
-    label: "Verdict"
-  },
-
-  {
-    key: "refined",
-    label: "Refined"
-  },
-
-  {
-    key: "redTeamReview",
-    label: "Red Team"
-  }
 ];
 
 function renderPipelineTracker(mode) {
@@ -2289,9 +2273,12 @@ function renderPipelineTracker(mode) {
           `
             <div
               class="pipeline-step"
-              data-key="${s.key}">
+              data-key="${escapeHTML(s.key)}">
+
               <span class="dot"></span>
-              ${s.label}
+
+              ${escapeHTML(s.label)}
+
             </div>
           `
       )
@@ -2316,9 +2303,7 @@ function markPipelineStep(
       `[data-key="${key}"]`
     );
 
-  if (!el) {
-    return;
-  }
+  if (!el) return;
 
   el.classList.remove(
     "active",
@@ -2351,17 +2336,70 @@ function markAllPipelineDone() {
 
 
 /* =========================================================
-   STREAMING CARDS
+   STREAMING STATE
 ========================================================= */
 
 const streamingCardBodies = {};
+const streamingQueues = {};
+const streamingTimers = {};
+const streamingFinalTexts = {};
+
+
+/* =========================================================
+   NORMALIZE STREAM TEXT
+========================================================= */
+
+function normalizeStreamText(data) {
+
+  if (
+    data === null ||
+    data === undefined
+  ) {
+    return "";
+  }
+
+  if (typeof data === "string") {
+    return data;
+  }
+
+  if (typeof data === "object") {
+
+    if (
+      typeof data.delta === "string"
+    ) {
+      return data.delta;
+    }
+
+    if (
+      typeof data.text === "string"
+    ) {
+      return data.text;
+    }
+
+    if (
+      typeof data.content === "string"
+    ) {
+      return data.content;
+    }
+
+    return JSON.stringify(
+      data
+    );
+  }
+
+  return String(data);
+}
+
+
+/* =========================================================
+   ENSURE STREAMING CARD
+========================================================= */
 
 function ensureStreamingCard(key) {
 
   if (
     streamingCardBodies[key]
   ) {
-
     return streamingCardBodies[key];
   }
 
@@ -2378,13 +2416,18 @@ function ensureStreamingCard(key) {
     );
 
   const cardId =
-    "card-body-" + key;
+    "card-body-" +
+    key +
+    "-" +
+    Date.now();
 
   results.insertAdjacentHTML(
     "beforeend",
 
     `
-      <div class="room-msg side-${meta.side}">
+      <div
+        class="room-msg side-${escapeHTML(meta.side)}"
+        data-stream-key="${escapeHTML(key)}">
 
         <div class="room-msg-label">
           ${escapeHTML(meta.title)}
@@ -2392,7 +2435,7 @@ function ensureStreamingCard(key) {
 
         <div
           class="card-body"
-          id="${cardId}">
+          id="${escapeHTML(cardId)}">
         </div>
 
       </div>
@@ -2404,18 +2447,222 @@ function ensureStreamingCard(key) {
       cardId
     );
 
+  if (!bodyEl) {
+    return null;
+  }
+
   streamingCardBodies[key] =
     bodyEl;
 
-  bodyEl
-    .closest(".room-msg")
-    .scrollIntoView({
+  streamingQueues[key] =
+    [];
+
+  streamingQueues[key].charIndex =
+    0;
+
+  streamingTimers[key] =
+    null;
+
+  streamingFinalTexts[key] =
+    null;
+
+  const message =
+    bodyEl.closest(".room-msg");
+
+  if (message) {
+
+    message.classList.add(
+      "streaming"
+    );
+
+    message.scrollIntoView({
       behavior: "smooth",
       block: "end"
     });
+  }
 
   return bodyEl;
 }
+
+
+/* =========================================================
+   SLOW, NATURAL STREAMING TYPING
+========================================================= */
+
+function startStreamingTyping(key) {
+
+  const bodyEl =
+    streamingCardBodies[key];
+
+  const queue =
+    streamingQueues[key];
+
+  if (
+    !bodyEl ||
+    !queue
+  ) {
+    return;
+  }
+
+  /*
+   * CRITICAL:
+   * Only ONE timer can exist for each agent.
+   */
+  if (
+    streamingTimers[key] !== null &&
+    streamingTimers[key] !== undefined
+  ) {
+    return;
+  }
+
+  function tick() {
+
+    streamingTimers[key] =
+      null;
+
+    /*
+     * Nothing left to display.
+     */
+    if (
+      queue.length === 0
+    ) {
+
+      if (
+        streamingFinalTexts[key] !== null &&
+        streamingFinalTexts[key] !== undefined
+      ) {
+
+        bodyEl.textContent =
+          streamingFinalTexts[key];
+
+        streamingFinalTexts[key] =
+          null;
+
+        const message =
+          bodyEl.closest(".room-msg");
+
+        if (message) {
+          message.classList.remove(
+            "streaming"
+          );
+        }
+      }
+
+      return;
+    }
+
+    let current =
+      queue[0];
+
+    if (
+      typeof current !== "string"
+    ) {
+      current =
+        String(current);
+    }
+
+    if (
+      typeof queue.charIndex !==
+      "number"
+    ) {
+      queue.charIndex = 0;
+    }
+
+    /*
+     * NORMAL:
+     * 1 character every 20ms.
+     *
+     * If the server gets far ahead,
+     * increase slightly so the UI
+     * doesn't become excessively delayed.
+     */
+    let charsPerTick = 1;
+
+    const backlog =
+      queue.reduce(
+        (total, chunk) =>
+          total +
+          String(chunk).length,
+        0
+      );
+
+    if (backlog > 2000) {
+      charsPerTick = 2;
+    }
+
+    const remaining =
+      current.length -
+      queue.charIndex;
+
+    const amount =
+      Math.min(
+        charsPerTick,
+        remaining
+      );
+
+    if (amount > 0) {
+
+      bodyEl.textContent +=
+        current.slice(
+          queue.charIndex,
+          queue.charIndex + amount
+        );
+
+      queue.charIndex +=
+        amount;
+    }
+
+    /*
+     * Current chunk completed.
+     */
+    if (
+      queue.charIndex >=
+      current.length
+    ) {
+
+      queue.shift();
+
+      queue.charIndex = 0;
+    }
+
+    /*
+     * Keep the newest text visible.
+     */
+    const message =
+      bodyEl.closest(".room-msg");
+
+    if (message) {
+
+      message.scrollIntoView({
+        behavior: "auto",
+        block: "end"
+      });
+    }
+
+    /*
+     * 20ms = slower, readable typing.
+     */
+    streamingTimers[key] =
+      setTimeout(
+        tick,
+        20
+      );
+  }
+
+  /*
+   * Start immediately.
+   */
+  streamingTimers[key] =
+    setTimeout(
+      tick,
+      0
+    );
+}
+
+
+/* =========================================================
+   APPEND STREAM CHUNK
+========================================================= */
 
 function appendToStreamingCard(
   key,
@@ -2429,9 +2676,39 @@ function appendToStreamingCard(
     return;
   }
 
-  bodyEl.textContent +=
-    chunkText;
+  const text =
+    normalizeStreamText(
+      chunkText
+    );
+
+  if (!text) {
+    return;
+  }
+
+  if (
+    !streamingQueues[key]
+  ) {
+
+    streamingQueues[key] =
+      [];
+
+    streamingQueues[key].charIndex =
+      0;
+  }
+
+  streamingQueues[key].push(
+    text
+  );
+
+  startStreamingTyping(
+    key
+  );
 }
+
+
+/* =========================================================
+   FINALIZE STREAMING CARD
+========================================================= */
 
 function finalizeStreamingCard(
   key,
@@ -2441,11 +2718,99 @@ function finalizeStreamingCard(
   const bodyEl =
     streamingCardBodies[key];
 
-  if (bodyEl) {
+  if (!bodyEl) {
+    return;
+  }
+
+  const text =
+    normalizeStreamText(
+      finalText
+    );
+
+  /*
+   * Store authoritative final text.
+   * Never destroy the visual queue.
+   */
+  streamingFinalTexts[key] =
+    text;
+
+  const queue =
+    streamingQueues[key];
+
+  if (
+    !queue ||
+    queue.length === 0
+  ) {
 
     bodyEl.textContent =
-      finalText;
+      text;
+
+    streamingFinalTexts[key] =
+      null;
+
+    const message =
+      bodyEl.closest(".room-msg");
+
+    if (message) {
+      message.classList.remove(
+        "streaming"
+      );
+    }
+
+    return;
   }
+
+  startStreamingTyping(
+    key
+  );
+}
+
+
+/* =========================================================
+   RESET STREAMING STATE
+========================================================= */
+
+function clearStreamingState() {
+
+  Object.keys(
+    streamingTimers
+  ).forEach(key => {
+
+    if (
+      streamingTimers[key] !== null &&
+      streamingTimers[key] !== undefined
+    ) {
+
+      clearTimeout(
+        streamingTimers[key]
+      );
+    }
+
+  });
+
+  Object.keys(
+    streamingCardBodies
+  ).forEach(key => {
+    delete streamingCardBodies[key];
+  });
+
+  Object.keys(
+    streamingQueues
+  ).forEach(key => {
+    delete streamingQueues[key];
+  });
+
+  Object.keys(
+    streamingTimers
+  ).forEach(key => {
+    delete streamingTimers[key];
+  });
+
+  Object.keys(
+    streamingFinalTexts
+  ).forEach(key => {
+    delete streamingFinalTexts[key];
+  });
 }
 
 
@@ -2458,7 +2823,7 @@ function parseSSEFrame(frame) {
   let eventName =
     "message";
 
-  let dataLines = [];
+  const dataLines = [];
 
   frame
     .split("\n")
@@ -2477,28 +2842,34 @@ function parseSSEFrame(frame) {
         line.startsWith("data:")
       ) {
 
+        /*
+         * Preserve streamed whitespace.
+         */
         dataLines.push(
-          line
-            .slice(5)
-            .trim()
+          line.slice(5)
         );
       }
 
     });
 
-  let data = null;
+  const rawData =
+    dataLines.join("\n");
+
+  let data;
 
   try {
 
     data =
       JSON.parse(
-        dataLines.join("\n")
+        rawData
       );
 
   } catch {
 
     data =
-      dataLines.join("\n");
+      rawData.startsWith(" ")
+        ? rawData.slice(1)
+        : rawData;
   }
 
   return {
@@ -2516,41 +2887,27 @@ async function runWarRoom() {
 
   const problem =
     document
-      .getElementById(
-        "problemInput"
-      )
+      .getElementById("problemInput")
       .value
       .trim();
 
   const runButton =
-    document.getElementById(
-      "runBtn"
-    );
+    document.getElementById("runBtn");
 
   const downloadButton =
-    document.getElementById(
-      "downloadBtn"
-    );
+    document.getElementById("downloadBtn");
 
   const loading =
-    document.getElementById(
-      "loading"
-    );
+    document.getElementById("loading");
 
   const results =
-    document.getElementById(
-      "results"
-    );
+    document.getElementById("results");
 
   const followup =
-    document.getElementById(
-      "followupSection"
-    );
+    document.getElementById("followupSection");
 
   const chatLog =
-    document.getElementById(
-      "chatLog"
-    );
+    document.getElementById("chatLog");
 
   if (!problem) {
 
@@ -2561,8 +2918,7 @@ async function runWarRoom() {
     return;
   }
 
-  runButton.disabled =
-    true;
+  runButton.disabled = true;
 
   downloadButton.style.display =
     "none";
@@ -2576,13 +2932,7 @@ async function runWarRoom() {
   results.innerHTML =
     "";
 
-  Object.keys(
-    streamingCardBodies
-  ).forEach(key => {
-
-    delete streamingCardBodies[key];
-
-  });
+  clearStreamingState();
 
   resetConfidenceMeter();
 
@@ -2617,11 +2967,8 @@ async function runWarRoom() {
   currentHistoryId =
     null;
 
-  let finalResult =
-    null;
-
-  let hadError =
-    false;
+  let finalResult = null;
+  let hadError = false;
 
   try {
 
@@ -2638,16 +2985,10 @@ async function runWarRoom() {
 
           body:
             JSON.stringify({
-
-              problem:
-                problem,
-
-              mode:
-                currentMode,
-
+              problem,
+              mode: currentMode,
               debateStyle:
                 currentDebateStyle
-
             })
         }
       );
@@ -2666,9 +3007,7 @@ async function runWarRoom() {
       response.body.getReader();
 
     const decoder =
-      new TextDecoder(
-        "utf-8"
-      );
+      new TextDecoder("utf-8");
 
     let buffer = "";
 
@@ -2696,9 +3035,7 @@ async function runWarRoom() {
 
       while (
         (boundary =
-          buffer.indexOf(
-            "\n\n"
-          )) !== -1
+          buffer.indexOf("\n\n")) !== -1
       ) {
 
         const frame =
@@ -2720,17 +3057,15 @@ async function runWarRoom() {
           eventName,
           data
         } =
-          parseSSEFrame(
-            frame
-          );
+          parseSSEFrame(frame);
+
+        /* ================= ERROR ================= */
 
         if (
-          eventName ===
-          "error"
+          eventName === "error"
         ) {
 
-          hadError =
-            true;
+          hadError = true;
 
           results.innerHTML =
             createCard(
@@ -2747,9 +3082,10 @@ async function runWarRoom() {
           break;
         }
 
+        /* ================= DONE ================= */
+
         if (
-          eventName ===
-          "done"
+          eventName === "done"
         ) {
 
           finalResult =
@@ -2758,11 +3094,11 @@ async function runWarRoom() {
           continue;
         }
 
+        /* ================= STREAM DELTA ================= */
+
         if (
           eventName &&
-          eventName.endsWith(
-            ":delta"
-          )
+          eventName.endsWith(":delta")
         ) {
 
           const baseKey =
@@ -2779,6 +3115,8 @@ async function runWarRoom() {
           continue;
         }
 
+        /* ================= NORMAL EVENT ================= */
+
         markPipelineStep(
           eventName,
           "done"
@@ -2788,11 +3126,7 @@ async function runWarRoom() {
           eventName
         );
 
-        /* =====================================================
-           IMPORTANT:
-           Judge's real scores override the live confidence
-           meter when the verdict arrives.
-        ===================================================== */
+        /* ================= REAL JUDGE SCORES ================= */
 
         if (
           eventName === "verdict" &&
@@ -2856,31 +3190,25 @@ async function runWarRoom() {
         if (meta) {
 
           if (
-            streamingCardBodies[
+            !streamingCardBodies[
               eventName
             ]
           ) {
 
-            finalizeStreamingCard(
-              eventName,
-              getAgentText(data)
-            );
-
-          } else {
-
             ensureStreamingCard(
               eventName
             );
-
-            finalizeStreamingCard(
-              eventName,
-              getAgentText(data)
-            );
           }
 
+          finalizeStreamingCard(
+            eventName,
+            getAgentText(data)
+          );
+
+          /* Scorecard immediately after verdict */
+
           if (
-            eventName ===
-            "verdict"
+            eventName === "verdict"
           ) {
 
             results.insertAdjacentHTML(
@@ -2896,6 +3224,8 @@ async function runWarRoom() {
             );
           }
         }
+
+        /* ================= NEXT STATUS ================= */
 
         const nextStatus =
           STATUS_AFTER[
@@ -2927,11 +3257,8 @@ async function runWarRoom() {
           }
 
           loading.textContent =
-            typeof nextStatus ===
-            "function"
-              ? nextStatus(
-                  currentMode
-                )
+            typeof nextStatus === "function"
+              ? nextStatus(currentMode)
               : nextStatus;
         }
       }
@@ -2943,6 +3270,25 @@ async function runWarRoom() {
 
     if (hadError) {
       return;
+    }
+
+    /*
+     * Handle a final frame that does not end
+     * with the usual blank line.
+     */
+    if (buffer.trim()) {
+
+      const {
+        eventName,
+        data
+      } =
+        parseSSEFrame(buffer);
+
+      if (
+        eventName === "done"
+      ) {
+        finalResult = data;
+      }
     }
 
     if (!finalResult) {
@@ -2957,6 +3303,12 @@ async function runWarRoom() {
 
     lastProblem =
       problem;
+
+    /*
+     * Wait until the visual queues have had
+     * time to finish before showing follow-up.
+     */
+    await waitForStreamingQueues();
 
     downloadButton.style.display =
       "inline-block";
@@ -3004,6 +3356,61 @@ async function runWarRoom() {
 
 
 /* =========================================================
+   WAIT FOR STREAMING QUEUES
+========================================================= */
+
+function waitForStreamingQueues() {
+
+  return new Promise(resolve => {
+
+    const start =
+      Date.now();
+
+    const timeout =
+      30000;
+
+    function check() {
+
+      const keys =
+        Object.keys(
+          streamingQueues
+        );
+
+      const pending =
+        keys.some(key => {
+
+          const queue =
+            streamingQueues[key];
+
+          return (
+            queue &&
+            queue.length > 0
+          );
+
+        });
+
+      if (
+        !pending ||
+        Date.now() - start >= timeout
+      ) {
+
+        resolve();
+
+        return;
+      }
+
+      setTimeout(
+        check,
+        100
+      );
+    }
+
+    check();
+  });
+}
+
+
+/* =========================================================
    FOLLOW-UP
 ========================================================= */
 
@@ -3035,9 +3442,7 @@ async function askFollowUp() {
     );
 
   const questionDiv =
-    document.createElement(
-      "div"
-    );
+    document.createElement("div");
 
   questionDiv.className =
     "chat-q";
@@ -3050,9 +3455,7 @@ async function askFollowUp() {
   );
 
   const answerDiv =
-    document.createElement(
-      "div"
-    );
+    document.createElement("div");
 
   answerDiv.className =
     "chat-a";
@@ -3064,11 +3467,9 @@ async function askFollowUp() {
     answerDiv
   );
 
-  input.value =
-    "";
+  input.value = "";
 
-  askButton.disabled =
-    true;
+  askButton.disabled = true;
 
   const context = {
 
@@ -3086,16 +3487,14 @@ async function askFollowUp() {
       ),
 
     solutionB:
-      lastResult.mode ===
-      "full"
+      lastResult.mode === "full"
         ? getAgentText(
             lastResult.solutionB
           )
         : null,
 
     verdict:
-      lastResult.mode ===
-      "full"
+      lastResult.mode === "full"
         ? getAgentText(
             lastResult.verdict
           )
@@ -3117,13 +3516,8 @@ async function askFollowUp() {
 
           body:
             JSON.stringify({
-
-              context:
-                context,
-
-              question:
-                question
-
+              context,
+              question
             })
         }
       );
@@ -3175,16 +3569,13 @@ async function askFollowUp() {
 ========================================================= */
 
 document
-  .getElementById(
-    "followupInput"
-  )
+  .getElementById("followupInput")
   .addEventListener(
     "keydown",
     event => {
 
       if (
-        event.key ===
-        "Enter"
+        event.key === "Enter"
       ) {
 
         event.preventDefault();
@@ -3227,15 +3618,12 @@ function downloadPDF() {
     new jsPDF();
 
   const pageWidth =
-    doc.internal.pageSize
-      .getWidth();
+    doc.internal.pageSize.getWidth();
 
   const pageHeight =
-    doc.internal.pageSize
-      .getHeight();
+    doc.internal.pageSize.getHeight();
 
-  const margin =
-    15;
+  const margin = 15;
 
   const maxWidth =
     pageWidth -
@@ -3243,9 +3631,7 @@ function downloadPDF() {
 
   let y = 20;
 
-  function ensureSpace(
-    height
-  ) {
+  function ensureSpace(height) {
 
     if (
       y + height >
@@ -3274,9 +3660,7 @@ function downloadPDF() {
       "bold"
     );
 
-    doc.setFontSize(
-      13
-    );
+    doc.setFontSize(13);
 
     doc.text(
       title,
@@ -3291,9 +3675,7 @@ function downloadPDF() {
       "normal"
     );
 
-    doc.setFontSize(
-      10
-    );
+    doc.setFontSize(10);
 
     const lines =
       doc.splitTextToSize(
@@ -3301,20 +3683,19 @@ function downloadPDF() {
         maxWidth
       );
 
-    lines.forEach(
-      line => {
+    lines.forEach(line => {
 
-        ensureSpace(6);
+      ensureSpace(6);
 
-        doc.text(
-          line,
-          margin,
-          y
-        );
+      doc.text(
+        line,
+        margin,
+        y
+      );
 
-        y += 5.5;
-      }
-    );
+      y += 5.5;
+
+    });
 
     y += 8;
   }
@@ -3324,9 +3705,7 @@ function downloadPDF() {
     "bold"
   );
 
-  doc.setFontSize(
-    18
-  );
+  doc.setFontSize(18);
 
   doc.text(
     "AI War Room Report",
@@ -3341,9 +3720,7 @@ function downloadPDF() {
     "italic"
   );
 
-  doc.setFontSize(
-    11
-  );
+  doc.setFontSize(11);
 
   const problemLines =
     doc.splitTextToSize(
@@ -3352,20 +3729,19 @@ function downloadPDF() {
       maxWidth
     );
 
-  problemLines.forEach(
-    line => {
+  problemLines.forEach(line => {
 
-      ensureSpace(6);
+    ensureSpace(6);
 
-      doc.text(
-        line,
-        margin,
-        y
-      );
+    doc.text(
+      line,
+      margin,
+      y
+    );
 
-      y += 6;
-    }
-  );
+    y += 6;
+
+  });
 
   y += 6;
 
@@ -3384,8 +3760,7 @@ function downloadPDF() {
   );
 
   if (
-    lastResult.mode ===
-    "full"
+    lastResult.mode === "full"
   ) {
 
     addSection(
@@ -3422,16 +3797,60 @@ function downloadPDF() {
         lastResult.feasibilityReviewB
       )
     );
+
+    addSection(
+      "AI A Rebuttal",
+      getAgentText(
+        lastResult.rebuttalA
+      )
+    );
+
+    addSection(
+      "AI B Rebuttal",
+      getAgentText(
+        lastResult.rebuttalB
+      )
+    );
+
+    addSection(
+      "AI A Cross-Exam",
+      getAgentText(
+        lastResult.crossExamA
+      )
+    );
+
+    addSection(
+      "AI B Cross-Exam",
+      getAgentText(
+        lastResult.crossExamB
+      )
+    );
+
     addSection(
       "Verifier — Fact Check",
       getAgentText(
         lastResult.verifier
       )
     );
+
     addSection(
-      "Red Team Review",
+      "Judge — Unresolved Issues",
       getAgentText(
-        lastResult.redTeamReview
+        lastResult.judgeIssues
+      )
+    );
+
+    addSection(
+      "AI A — Issue Response",
+      getAgentText(
+        lastResult.issueResponseA
+      )
+    );
+
+    addSection(
+      "AI B — Issue Response",
+      getAgentText(
+        lastResult.issueResponseB
       )
     );
 
@@ -3442,6 +3861,12 @@ function downloadPDF() {
       )
     );
 
+    addSection(
+      "Red Team Review",
+      getAgentText(
+        lastResult.redTeamReview
+      )
+    );
   }
 
   addSection(
@@ -3462,6 +3887,8 @@ function downloadPDF() {
 ========================================================= */
 
 renderHistory();
+
+updateConfidenceMeter();
 
 </script>
 

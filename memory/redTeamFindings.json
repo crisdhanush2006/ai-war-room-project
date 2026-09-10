@@ -1,9 +1,5 @@
 [
   {
-    "finding": "The system creates an automated escalation path that encourages customers to bypass self-service, while simultaneously binding support reliability to the inherently volatile and often inaccurate status-reporting APIs of third-party carriers.",
-    "timestamp": "2026-09-05T10:32:27.720Z"
-  },
-  {
     "finding": "Your system relies on a fragile, latency-prone NLP and telemetry-capture layer that will produce high volumes of inaccurate \"context,\" causing agents to distrust the automated insights and revert to manual discovery, effectively rendering the entire \"Intelligent\" infrastructure redundant.",
     "timestamp": "2026-09-05T11:08:09.726Z"
   },
@@ -98,5 +94,9 @@
   {
     "finding": "The system assumes e-commerce photography consists of uniform 2D flat projections, causing flat SVG overlays and silhouettes to severely misalign with 3D camera perspectives, creating misleading visual fits that increase return rates.",
     "timestamp": "2026-09-08T17:58:58.672Z"
+  },
+  {
+    "finding": "Displaying scannable, reward-generating QR codes on an unmonitored public wall invites widespread discount harvesting and reward fraud, while relying on customers to manually handle and return physical tiles guarantees rapid tile loss and operational chaos.",
+    "timestamp": "2026-09-10T13:18:44.410Z"
   }
 ]
